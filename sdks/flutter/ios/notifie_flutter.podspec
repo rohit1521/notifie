@@ -4,7 +4,7 @@ Pod::Spec.new do |spec|
   spec.summary          = 'Flutter bridge for the Notifie Device SDK.'
   spec.homepage         = 'https://notifie.dev'
   spec.license          = { :type => 'Apache-2.0' }
-  spec.author           = { 'Notifie' => 'support@notifie.dev' }
+  spec.author           = { 'Notifie' => 'opensource@notifie.dev' }
   spec.source           = { :path => '.' }
   spec.source_files     = 'Classes/**/*'
   spec.dependency 'Flutter'

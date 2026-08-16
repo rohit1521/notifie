@@ -8,7 +8,7 @@ Pod::Spec.new do |spec|
   DESC
   spec.homepage         = 'https://notifie.dev'
   spec.license          = { :type => 'Apache-2.0', :file => 'sdks/swift/LICENSE' }
-  spec.author           = { 'Notifie' => 'support@notifie.dev' }
+  spec.author           = { 'Notifie' => 'opensource@notifie.dev' }
   spec.source           = {
     :git => 'https://github.com/rohit1521/notifie.git',
     :tag => "swift-#{spec.version}",
