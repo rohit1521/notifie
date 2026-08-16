@@ -14,6 +14,14 @@ on:
         options:
           - beta
           - latest
+      target:
+        description: Packages to publish
+        required: true
+        default: cli
+        type: choice
+        options:
+          - cli
+          - all
       dry_run:
         description: Pack and verify without publishing
         type: boolean
@@ -44,6 +52,23 @@ jobs:
       - run: pnpm build
       - run: pnpm test
 
+      - name: Select packages
+        run: |
+          case "${{ inputs.target }}" in
+            cli)
+              packages="packages/contracts packages/cli"
+              ;;
+            all)
+              packages="packages/contracts packages/cli packages/server sdks/react-native sdks/web"
+              ;;
+            *)
+              echo "::error::Unknown publish target: ${{ inputs.target }}"
+              exit 1
+              ;;
+          esac
+          echo "NOTIFIE_PACKAGES=$packages" >> "$GITHUB_ENV"
+          echo "Selected: $packages"
+
       # A prerelease published under "latest" becomes what every plain
       # `npm install` resolves to. npm rejects an untagged prerelease, but it
       # will happily honour an explicit --tag latest, so the check is here.
@@ -51,7 +76,7 @@ jobs:
         if: ${{ inputs.tag == 'latest' }}
         run: |
           set -euo pipefail
-          for pkg in packages/contracts packages/cli packages/server sdks/react-native sdks/web; do
+          for pkg in $NOTIFIE_PACKAGES; do
             version="$(node -p "require('./$pkg/package.json').version")"
             case "$version" in
               *-*)
@@ -71,7 +96,7 @@ jobs:
           # resolves that to a real version when building the tarball. npm
           # copies it through verbatim and reports success, producing a package
           # nobody can install.
-          for pkg in packages/contracts packages/cli packages/server sdks/react-native sdks/web; do
+          for pkg in $NOTIFIE_PACKAGES; do
             (cd "$pkg" && pnpm pack --pack-destination "$GITHUB_WORKSPACE/staging")
           done
           ls -1 staging
@@ -100,7 +125,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
-          for pkg in packages/contracts packages/cli packages/server sdks/react-native sdks/web; do
+          for pkg in $NOTIFIE_PACKAGES; do
             name="$(node -p "require('./$pkg/package.json').name.replace('@','').replace('/','-')")"
             version="$(node -p "require('./$pkg/package.json').version")"
             tarball="./staging/$name-$version.tgz"
