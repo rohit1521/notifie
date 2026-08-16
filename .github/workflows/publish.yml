@@ -167,13 +167,31 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 20); do
-            if npm view @notifie-dev/cli@beta version \
-              --registry https://registry.npmjs.org/ >/tmp/notifie-version \
-              && npx --yes --package @notifie-dev/cli@beta notifie --help \
-                | grep -q 'Notifie CLI'; then
-              echo "Verified @notifie-dev/cli@$(cat /tmp/notifie-version)"
+            if version="$(npm view @notifie-dev/cli@beta version \
+              --registry https://registry.npmjs.org/ 2>&1)"; then
+              echo "Registry version: $version"
+            else
+              echo "npm view failed: $version"
+              echo "Waiting for npm propagation ($attempt/20)..."
+              sleep 15
+              continue
+            fi
+
+            if output="$(npm exec --yes --package=@notifie-dev/cli@beta \
+              -- notifie --help 2>&1)"; then
+              printf '%s\n' "$output"
+            else
+              echo "npm exec failed: $output"
+              echo "Waiting for npm propagation ($attempt/20)..."
+              sleep 15
+              continue
+            fi
+
+            if printf '%s\n' "$output" | grep -q 'Notifie CLI'; then
+              echo "Verified @notifie-dev/cli@$version"
               exit 0
             fi
+            echo "CLI output did not contain the expected heading."
             echo "Waiting for npm propagation ($attempt/20)..."
             sleep 15
           done
