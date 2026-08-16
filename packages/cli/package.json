@@ -5,12 +5,12 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "notifie": "./dist/main.js",
-    "growth": "./dist/main.js"
+    "notifie": "./dist/main.js"
   },
   "files": [
     "dist",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",

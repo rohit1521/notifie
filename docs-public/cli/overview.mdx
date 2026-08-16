@@ -5,7 +5,7 @@ description: "Configure an existing native or cross-platform project and inspect
 
 <Note>
   The CLI currently ships from the Notifie repository and is not published as a standalone npm
-  package. Private-beta repository access is required. Link the workspace CLI so the `growth`
+  package. Private-beta repository access is required. Link the workspace CLI so the `notifie`
   command is available before using these commands.
 </Note>
 
@@ -14,7 +14,7 @@ From the Notifie repository:
 ```bash
 cd packages/cli
 pnpm link --global
-growth --help
+notifie --help
 ```
 
 ## Initialize a project
@@ -34,9 +34,6 @@ notifie init <SDK_INGEST_KEY> --yes
 Run the command from an existing iOS, Android, Flutter, React Native, Expo, or web app root. It
 writes `notifie.json`, detects the project, plans safe file changes, and prints remaining manual
 provider steps.
-
-Legacy `notifie.json` files and `NOTIFIE_*` environment variables remain readable during the
-beta migration; new configuration should use `notifie.json` and `NOTIFIE_*`.
 
 Environment variables override the file:
 
