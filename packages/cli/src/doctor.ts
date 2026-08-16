@@ -215,7 +215,7 @@ export function checkEventsArriving(state: AppState): CheckResult {
       name: 'Events arriving',
       status: 'fail',
       message: 'No events received yet.',
-      fix: 'Call Growth.track("app_open") somewhere in your app and run it once.',
+      fix: 'Call Notifie.track("app_open") somewhere in your app and run it once.',
     };
   }
 
@@ -657,7 +657,7 @@ export function checkEventsFlowing(status: RemoteStatus | null): CheckResult {
       name: 'Events arriving',
       status: 'fail',
       message: 'No events received yet.',
-      fix: 'Call Growth.initialize() and run your app once — app_open and install are tracked for you.',
+      fix: 'Call Notifie.initialize() and run your app once — app_open and install are tracked for you.',
     };
   }
 

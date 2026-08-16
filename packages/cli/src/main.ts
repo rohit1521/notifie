@@ -276,8 +276,8 @@ async function cmdInit(args: string[]): Promise<number> {
       break;
     case 'swift':
       print('    import Notifie');
-      print(`    Growth.initialize(apiKey: "${apiKey.slice(0, 16)}…")`);
-      print('    Growth.enableNotifications()\n');
+      print(`    Notifie.initialize(apiKey: "${apiKey.slice(0, 16)}…")`);
+      print('    await Notifie.enableNotifications()\n');
       break;
     case 'web':
       print(`    Notifie.initialize({ apiKey: '${apiKey.slice(0, 16)}…' });`);
