@@ -132,7 +132,7 @@ describe('app state checks', () => {
   it('fails when no events have arrived, and names the exact call to make', () => {
     const result = checkEventsArriving(base);
     expect(result.status).toBe('fail');
-    expect(result.fix).toContain('Growth.track');
+    expect(result.fix).toContain('Notifie.track');
   });
 
   it('passes once events exist', () => {
