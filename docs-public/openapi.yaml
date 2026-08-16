@@ -1,0 +1,410 @@
+openapi: 3.1.0
+info:
+  title: Notifie API
+  version: 1.0.0
+  description: Event ingestion, identity, device registration, diagnostics, and server-triggered delivery.
+servers:
+  - url: https://notifie.dev
+security:
+  - bearerAuth: []
+  - apiKey: []
+paths:
+  /api/v1/events:
+    post:
+      summary: Ingest events
+      operationId: ingestEvents
+      tags: [Ingest]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackBatch'
+      responses:
+        '200':
+          description: Events accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [received, inserted, duplicates]
+                properties:
+                  received: { type: integer }
+                  inserted: { type: integer }
+                  duplicates: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413': { $ref: '#/components/responses/TooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/identify:
+    post:
+      summary: Identify a user
+      operationId: identifyUser
+      tags: [Ingest]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Identify'
+      responses:
+        '200':
+          description: Identity linked
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userId]
+                properties:
+                  userId: { type: string, format: uuid }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/push-tokens:
+    post:
+      summary: Register a push token
+      operationId: registerPushToken
+      tags: [Devices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushToken'
+      responses:
+        '200':
+          description: Token registered
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean, const: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    delete:
+      summary: Deactivate a push token
+      operationId: deactivatePushToken
+      tags: [Devices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushTokenRevocation'
+      responses:
+        '200':
+          description: Token is inactive or was already absent
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean, const: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/trigger:
+    post:
+      summary: Trigger recipient Flows
+      operationId: triggerFlows
+      tags: [Delivery]
+      description: Requires a server-only key with the send scope.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerRequest'
+      responses:
+        '202':
+          description: Trigger events accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accepted, recipientCount, inserted, duplicates]
+                properties:
+                  accepted: { type: boolean, const: true }
+                  recipientCount: { type: integer }
+                  inserted: { type: integer }
+                  duplicates: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413': { $ref: '#/components/responses/TooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/send:
+    post:
+      summary: Queue an API automation or direct notification
+      operationId: sendNotification
+      tags: [Delivery]
+      description: Requires a server-only key with the send scope.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/AutomationSend'
+                - $ref: '#/components/schemas/DirectNotificationCommand'
+      responses:
+        '202':
+          description: Automation job queued
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AutomationSendResult'
+                  - $ref: '#/components/schemas/DirectNotificationResult'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '413': { $ref: '#/components/responses/TooLarge' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/status:
+    get:
+      summary: Read integration status
+      operationId: getIntegrationStatus
+      tags: [Diagnostics]
+      responses:
+        '200':
+          description: Counts and setup metadata for the key's app
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events, deviceTokens, pushCredentials, activeAutomations, eventNames]
+                properties:
+                  events: { type: integer }
+                  deviceTokens: { type: integer }
+                  pushCredentials:
+                    type: array
+                    items: { type: string, enum: [apns, fcm] }
+                  activeAutomations: { type: integer }
+                  eventNames:
+                    type: array
+                    maxItems: 50
+                    items: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    apiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+  schemas:
+    Properties:
+      type: object
+      maxProperties: 64
+      additionalProperties:
+        oneOf:
+          - { type: string, maxLength: 1024 }
+          - { type: number }
+          - { type: boolean }
+          - { type: 'null' }
+    TrackEvent:
+      type: object
+      additionalProperties: false
+      required: [event]
+      anyOf:
+        - required: [userId]
+        - required: [anonymousId]
+      properties:
+        userId: { type: string, minLength: 1, maxLength: 256 }
+        anonymousId: { type: string, minLength: 1, maxLength: 256 }
+        event:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: '^[A-Za-z0-9][A-Za-z0-9 _.:-]*$'
+        timestamp: { type: string, format: date-time }
+        properties: { $ref: '#/components/schemas/Properties' }
+        messageId: { type: string, format: uuid }
+    TrackBatch:
+      type: object
+      additionalProperties: false
+      required: [events]
+      properties:
+        events:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/TrackEvent' }
+        sentAt: { type: string, format: date-time }
+    Identify:
+      type: object
+      additionalProperties: false
+      required: [userId]
+      properties:
+        userId: { type: string, minLength: 1, maxLength: 256 }
+        anonymousId: { type: string, minLength: 1, maxLength: 256 }
+        properties: { $ref: '#/components/schemas/Properties' }
+        timestamp: { type: string, format: date-time }
+    PushToken:
+      type: object
+      additionalProperties: false
+      required: [token, platform, provider]
+      anyOf:
+        - required: [userId]
+        - required: [anonymousId]
+      properties:
+        userId: { type: string, minLength: 1, maxLength: 256 }
+        anonymousId: { type: string, minLength: 1, maxLength: 256 }
+        token: { type: string, minLength: 1, maxLength: 512 }
+        platform: { type: string, enum: [ios, android] }
+        provider: { type: string, enum: [apns, fcm] }
+    PushTokenRevocation:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: { type: string, minLength: 1, maxLength: 512 }
+    RecipientSelector:
+      oneOf:
+        - { type: string, minLength: 1, maxLength: 256 }
+        - type: array
+          minItems: 1
+          maxItems: 100
+          items: { type: string, minLength: 1, maxLength: 256 }
+    TriggerRequest:
+      type: object
+      additionalProperties: false
+      required: [event, to]
+      properties:
+        event:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: '^[A-Za-z0-9][A-Za-z0-9 _.:-]*$'
+        to: { $ref: '#/components/schemas/RecipientSelector' }
+        data: { $ref: '#/components/schemas/Properties' }
+        idempotencyKey: { type: string, minLength: 1, maxLength: 128 }
+        timestamp: { type: string, format: date-time }
+    AutomationSend:
+      type: object
+      additionalProperties: false
+      required: [automationId]
+      properties:
+        automationId: { type: string, format: uuid }
+        idempotencyKey: { type: string, minLength: 1, maxLength: 128 }
+    NotificationCustomData:
+      type: object
+      maxProperties: 20
+      additionalProperties: { type: string, maxLength: 1024 }
+      description: Reserved Notifie, APNs, and FCM keys are rejected. Serialized data is limited to 2 KB.
+    AlertNotification:
+      type: object
+      additionalProperties: false
+      required: [title, body]
+      properties:
+        mode: { type: string, const: alert }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        body: { type: string, minLength: 1, maxLength: 250 }
+        deepLink: { type: string, format: uri }
+        imageUrl: { type: string, format: uri }
+        sound: { type: string, minLength: 1, maxLength: 64 }
+        badge: { type: integer, minimum: 0, maximum: 99999 }
+        collapseId: { type: string, minLength: 1, maxLength: 64 }
+        threadId: { type: string, minLength: 1, maxLength: 64 }
+        category: { type: string, minLength: 1, maxLength: 64 }
+        ttlSeconds: { type: integer, minimum: 0, maximum: 2419200 }
+        customData: { $ref: '#/components/schemas/NotificationCustomData' }
+    BackgroundNotification:
+      type: object
+      additionalProperties: false
+      required: [mode, customData]
+      properties:
+        mode: { type: string, const: background }
+        customData:
+          allOf:
+            - $ref: '#/components/schemas/NotificationCustomData'
+            - minProperties: 1
+        collapseId: { type: string, minLength: 1, maxLength: 64 }
+        ttlSeconds: { type: integer, minimum: 0, maximum: 2419200 }
+    DirectNotificationCommand:
+      type: object
+      additionalProperties: false
+      required: [to, notification]
+      not:
+        required: [deliverAt, delaySeconds]
+      properties:
+        to: { $ref: '#/components/schemas/RecipientSelector' }
+        notification:
+          oneOf:
+            - $ref: '#/components/schemas/AlertNotification'
+            - $ref: '#/components/schemas/BackgroundNotification'
+        parameters: { $ref: '#/components/schemas/Properties' }
+        type:
+          type: string
+          enum:
+            - transactional
+            - social
+            - state_change
+            - progress
+            - reminder
+            - lifecycle
+            - marketing
+            - security
+            - system
+            - background
+          default: transactional
+        deliverAt: { type: string, format: date-time }
+        delaySeconds: { type: integer, minimum: 1, maximum: 2592000 }
+        idempotencyKey: { type: string, minLength: 1, maxLength: 128 }
+    AutomationSendResult:
+      type: object
+      required: [accepted, jobId]
+      properties:
+        accepted: { type: boolean, const: true }
+        jobId: { type: string, format: uuid }
+    DirectNotificationResult:
+      type: object
+      required: [accepted, recipientCount, jobIds]
+      properties:
+        accepted: { type: boolean, const: true }
+        recipientCount: { type: integer }
+        jobIds:
+          type: array
+          items: { type: string, format: uuid }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing or invalid key
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooLarge:
+      description: Batch or body too large
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    RateLimited:
+      description: App rate limit exceeded
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Error:
+      description: Error response

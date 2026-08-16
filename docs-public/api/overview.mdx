@@ -1,0 +1,37 @@
+---
+title: "API overview"
+description: "Authenticate Notifie requests and understand ingest versus server-send keys."
+---
+
+## Base URL
+
+```text
+https://notifie.dev/api/v1
+```
+
+## Authentication
+
+Send a Notifie key in either header:
+
+```http
+Authorization: Bearer <NOTIFIE_KEY>
+```
+
+```http
+x-api-key: <NOTIFIE_KEY>
+```
+
+Use an **SDK ingest key** for events, identification, push tokens, and status. Use a distinct
+**server send key** for `POST /trigger` and `POST /send`. A key embedded in a shipped app cannot
+target recipients or trigger audience-wide delivery.
+
+## Rate limiting
+
+Ingest is limited per app and charged per event, not per HTTP request. A rejected request returns
+`429` and `Retry-After`. Batching cannot bypass the app budget.
+
+## Errors
+
+Errors use a JSON body with an `error` string. Validation responses may also include field details.
+Do not retry `400`, `401`, `403`, or `413` indefinitely. Retry network errors, `429`, and temporary
+server failures with backoff.

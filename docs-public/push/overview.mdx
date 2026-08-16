@@ -1,0 +1,31 @@
+---
+title: "Push setup overview"
+description: "Configure provider credentials, register a physical device, and verify delivery."
+---
+
+Notifie sends mobile push through APNs and Firebase Cloud Messaging. Provider credentials remain
+owned by your Apple Developer or Firebase project.
+
+<Steps>
+  <Step title="Upload provider credentials">
+    Upload an APNs `.p8` key for Apple delivery or an FCM service-account JSON for Firebase
+    delivery. Private material is write-only in the browser and encrypted at rest.
+  </Step>
+  <Step title="Register a physical device">
+    Initialize the SDK, request notification permission, and let the SDK upload the real provider
+    token.
+  </Step>
+  <Step title="Send the setup event">
+    Track `notifie_test_notification` from the device. The worker sends a one-time setup
+    notification after matching credentials and a device token exist.
+  </Step>
+  <Step title="Confirm presentation">
+    Provider acceptance proves handoff, not display. Confirm the notification appears and opens on
+    the physical device.
+  </Step>
+</Steps>
+
+<CardGroup cols={2}>
+  <Card title="iOS and APNs" icon="apple" href="/ios-push-setup" />
+  <Card title="Android and FCM" icon="smartphone" href="/push/android-fcm" />
+</CardGroup>

@@ -1,0 +1,9 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
+#include "Generated.xcconfig"
+IPHONEOS_DEPLOYMENT_TARGET=15.0
+
+// Signing. Leave unset to build for the simulator; set your own Apple Developer
+// Team ID to build on a physical device. A team is deliberately not committed:
+// it identifies its owner, and nobody else can build against a team they are
+// not a member of.
+// GK_TEAM_ID=ABCDE12345

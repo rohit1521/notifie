@@ -1,0 +1,79 @@
+---
+title: "Swift SDK"
+description: "Track events and identify users from Swift, with APNs registration on iOS."
+---
+
+<Note>
+Local notifications need no API key, no network and no Notifie account. See
+[Local notifications](/local-notifications).
+</Note>
+
+
+## Requirements
+
+- iOS 15+ or macOS 12+
+- Swift 5.9+
+
+macOS supports events and identification. Notification permission and APNs token enrollment in the
+current SDK require UIKit and are available only on iOS.
+
+## Install
+
+Swift Package Manager, through Xcode's **Add Local Package** flow on
+`sdks/swift`. A tagged remote package release is not available yet.
+
+CocoaPods is published, which is also what lets the Flutter plugin depend on
+this SDK:
+
+```ruby
+pod 'Notifie', '0.1.0-beta.2'
+```
+
+## Initialize and track
+
+```swift
+import Notifie
+
+Notifie.initialize(
+    apiKey: "<SDK_INGEST_KEY>",
+    baseURL: URL(string: "https://notifie.dev")!
+)
+
+Notifie.identify("user-123", properties: [
+    "plan": .string("pro")
+])
+
+Notifie.track("purchase_completed", properties: [
+    "amount": .double(9.99)
+])
+```
+
+## Enable notifications
+
+Request permission when it makes sense in your product:
+
+```swift
+let result = await Notifie.enableNotifications()
+```
+
+Forward the APNs registration callback:
+
+```swift
+func application(
+    _ application: UIApplication,
+    didRegisterForRemoteNotificationsWithDeviceToken token: Data
+) {
+    PushTokenBridge.shared.didRegister(deviceToken: token)
+}
+```
+
+Continue with [iOS push setup](/ios-push-setup).
+
+## Session helpers
+
+```swift
+await Notifie.flush()
+Notifie.reset()
+```
+
+`reset()` clears the identified user and creates a new anonymous identity for logout.

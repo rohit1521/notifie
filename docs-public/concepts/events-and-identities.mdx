@@ -1,0 +1,43 @@
+---
+title: "Events and identities"
+description: "Understand event naming, properties, anonymous users, identification, and idempotency."
+---
+
+## Event contract
+
+Event names are 1-64 characters, start with a letter or number, and may contain letters,
+numbers, spaces, `_`, `.`, `:`, or `-`.
+
+Properties are deliberately flat:
+
+```json
+{
+  "plan": "pro",
+  "amount": 9.99,
+  "trial": false,
+  "coupon": null
+}
+```
+
+Nested objects and arrays are rejected. Each event supports at most 64 property keys, and each
+string value is limited to 1,024 characters.
+
+## Anonymous identity
+
+Every SDK creates and persists an anonymous device or browser ID. Events can use a `userId`, an
+`anonymousId`, or both. Notifie uses these values to resolve the app user without exposing
+dashboard users or Supabase identities to the SDK.
+
+## Identification
+
+Swift, Android, and Flutter expose an `identify` API. Identification associates future events and
+the retained push token with the external user while preserving anonymous history from before
+login. React Native identification is still awaiting its SDK branch merge.
+
+At the HTTP boundary, `POST /api/v1/identify` links an anonymous device to a user and carries its
+earlier event history forward.
+
+## Retry safety
+
+SDKs attach a UUID `messageId` when supported and reuse it on retry. Replaying the same event stores
+no duplicate and dispatches no second automation job.

@@ -1,0 +1,37 @@
+---
+title: "Troubleshooting"
+description: "Find the failing boundary between the SDK, Notifie, a push provider, and the device."
+---
+
+## Events do not appear
+
+1. Confirm the app uses `https://notifie.dev`, not localhost.
+2. Verify the key is an SDK ingest key for the correct Notifie app.
+3. Use a flat property object and a valid event name.
+4. Flush or wait for the SDK batch interval.
+5. Run `notifie doctor`.
+
+## Push token is missing
+
+- Test on a physical Apple device for APNs.
+- Confirm Push Notifications capability and the signed Bundle ID.
+- On Android 13+, grant `POST_NOTIFICATIONS`.
+- Verify Firebase native configuration matches the app identifier.
+
+## Provider accepted but the notification did not appear
+
+Acceptance proves APNs or FCM received the request. It does not prove device delivery or visual
+presentation. Check foreground handlers, notification permissions, focus modes, token environment,
+and device logs.
+
+## APNs errors
+
+- Keep the original `AuthKey_XXXXXXXXXX.p8` filename.
+- Ensure Team ID, Bundle ID, key ownership, and APNs environment match.
+- A production token cannot be sent through the sandbox endpoint and vice versa.
+
+## FCM errors
+
+- Upload a service-account JSON, not `google-services.json`.
+- Keep the service-account JSON server-side.
+- Confirm the Firebase project issuing device tokens is the same project used by sender credentials.

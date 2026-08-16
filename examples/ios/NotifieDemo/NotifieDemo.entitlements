@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  `development` targets the APNs sandbox, which is what a debug build
+	  installed from Xcode uses. A TestFlight or App Store build needs
+	  `production`, and a token from one environment is rejected by the other —
+	  set APNS_ENVIRONMENT on the worker to match.
+	-->
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

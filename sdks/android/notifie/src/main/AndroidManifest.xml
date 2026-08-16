@@ -1,0 +1,69 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <permission
+        android:name="${applicationId}.permission.NOTIFIE_NOTIFICATION_OPEN"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="${applicationId}.permission.NOTIFIE_NOTIFICATION_OPEN" />
+
+    <!--
+      Local notification schedules are re-established after a reboot. Without
+      this, a daily reminder stops firing after a restart and reports nothing.
+    -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="notifie_default" />
+
+        <service
+            android:name=".NotifieFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".NotifieNotificationReceiver"
+            android:exported="false" />
+
+        <!-- Fires a scheduled local notification and re-arms recurring ones. -->
+        <receiver
+            android:name="dev.notifie.LocalNotificationAlarmReceiver"
+            android:exported="false" />
+
+        <!-- AlarmManager keeps nothing across a reboot or an upgrade. -->
+        <receiver
+            android:name="dev.notifie.LocalNotificationBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name=".NotifiePermissionActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <activity
+            android:name=".NotifieNotificationOpenActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:permission="${applicationId}.permission.NOTIFIE_NOTIFICATION_OPEN"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="dev.notifie.NOTIFICATION_OPEN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

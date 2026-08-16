@@ -1,0 +1,1 @@
+# Notifie does not require consumer ProGuard rules.

@@ -1,0 +1,8 @@
+packages:
+  - 'packages/*'
+  - 'sdks/react-native'
+  - 'sdks/web'
+  - 'examples/react-native'
+
+onlyBuiltDependencies:
+  - esbuild

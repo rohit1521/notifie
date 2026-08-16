@@ -1,0 +1,32 @@
+---
+title: "React Native SDK"
+description: "Track events and register Firebase messaging tokens from React Native."
+---
+
+## Install from the repository
+
+Reference `sdks/react-native` as a local file dependency. The package is not yet published to npm.
+
+```json
+{
+  "dependencies": {
+    "@notifie/react-native": "file:../Notifie/sdks/react-native"
+  }
+}
+```
+
+## Initialize and track
+
+```tsx
+import { Notifie } from '@notifie/react-native';
+
+await Notifie.initialize({
+  apiKey: '<SDK_INGEST_KEY>',
+  baseUrl: 'https://notifie.dev',
+});
+
+await Notifie.track('purchase_completed', { amount: 9.99 });
+await Notifie.enableNotifications();
+```
+
+The host project still needs standard Firebase native configuration files.

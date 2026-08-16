@@ -1,0 +1,51 @@
+{
+  "name": "@notifie/contracts",
+  "version": "0.1.0-beta.1",
+  "description": "Public Notifie event, identity, push token, and notification contracts.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./apns-verification": {
+      "types": "./dist/apns-verification.d.ts",
+      "import": "./dist/apns-verification.js"
+    },
+    "./notify": {
+      "types": "./dist/notify.d.ts",
+      "import": "./dist/notify.js"
+    },
+    "./templates": {
+      "types": "./dist/templates.d.ts",
+      "import": "./dist/templates.js"
+    },
+    "./provider-results": {
+      "types": "./dist/provider-results.d.ts",
+      "import": "./dist/provider-results.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "prepack": "pnpm build",
+    "pack:check": "pnpm pack --pack-destination .pack"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.1",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

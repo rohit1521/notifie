@@ -1,0 +1,47 @@
+---
+title: "Flutter SDK"
+description: "Track events and register Firebase messaging tokens from Flutter."
+---
+
+<Note>
+Local notifications need no API key, no network and no Notifie account. They
+delegate to the native iOS and Android implementations. See
+[Local notifications](/local-notifications).
+</Note>
+
+
+## Install
+
+```yaml
+dependencies:
+  notifie_flutter: 0.1.0-beta.3
+```
+
+The package requires iOS 15+ or Android API 23+.
+
+## Initialize and track
+
+```dart
+import 'package:notifie_flutter/notifie_flutter.dart';
+
+await Notifie.initialize(
+  apiKey: '<SDK_INGEST_KEY>',
+  baseUrl: 'https://notifie.dev',
+);
+
+await Notifie.track(
+  'purchase_completed',
+  properties: {'amount': 9.99},
+);
+```
+
+## Enable notifications
+
+```dart
+await Notifie.enableNotifications();
+```
+
+Configure Firebase Messaging in each native target. Android registers an FCM token and delivers
+through FCM. On iOS, Firebase Messaging obtains the native APNs token, but Notifie registers that
+token as APNs and delivers with the APNs key configured in the dashboard. A
+`GoogleService-Info.plist` is still required to initialize Firebase Messaging in the host app.

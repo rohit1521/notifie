@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "isolatedModules": true,
+    // Source is consumed directly rather than built to JS: Next transpiles these
+    // packages, and Node's type stripping runs the CLI. Explicit .ts specifiers
+    // are the one form both resolvers agree on.
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  }
+}

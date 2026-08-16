@@ -1,0 +1,58 @@
+---
+title: "Server SDK"
+description: "Track events, identify users, trigger Flows, and send direct notifications from trusted backend code."
+---
+
+<Note>
+  The server SDK is currently available only to private-beta users with repository access. Never
+  expose a send-scoped key in a mobile app, web bundle, or public repository.
+</Note>
+
+## Install from the workspace
+
+```json
+{
+  "dependencies": {
+    "@notifie/server": "workspace:*"
+  }
+}
+```
+
+## Configure
+
+```ts
+import { Notifie } from '@notifie/server';
+
+const growth = new Notifie({
+  ingestKey: process.env.NOTIFIE_INGEST_KEY,
+  sendKey: process.env.NOTIFIE_SEND_KEY,
+  baseUrl: 'https://notifie.dev',
+});
+```
+
+Use `track` and `identify` with the ingest key. Use `trigger` when a Flow owns notification content:
+
+```ts
+await growth.trigger('post_liked', {
+  to: 'post-owner',
+  data: { actor_name: 'Maya', post_id: 'post-7' },
+  idempotencyKey: 'like-42',
+});
+```
+
+Use `notify` only when backend code must own the complete notification:
+
+```ts
+await growth.notify({
+  to: 'user-123',
+  type: 'transactional',
+  notification: {
+    title: 'Order shipped',
+    body: 'Your order is on its way.',
+  },
+  idempotencyKey: 'order-42-shipped',
+});
+```
+
+The SDK generates an idempotency key before retrying transient failures. Supply your own stable key
+when separate processes may retry the same operation.

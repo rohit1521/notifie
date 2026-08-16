@@ -1,0 +1,84 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Notifie",
+  "colors": {
+    "primary": "#0F766E",
+    "light": "#14B8A6",
+    "dark": "#0D9488"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Dashboard",
+        "href": "https://notifie.dev"
+      }
+    ]
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get started",
+        "pages": [
+          "index",
+          "quickstart",
+          "local-notifications",
+          "concepts/events-and-identities"
+        ]
+      },
+      {
+        "group": "SDKs",
+        "pages": [
+          "sdk/overview",
+          "sdk/swift",
+          "sdk/android",
+          "sdk/flutter",
+          "sdk/react-native",
+          "sdk/server",
+          "sdk/web"
+        ]
+      },
+      {
+        "group": "Push notifications",
+        "pages": [
+          "push/overview",
+          "ios-push-setup",
+          "push/android-fcm"
+        ]
+      },
+      {
+        "group": "Automations",
+        "pages": [
+          "automations/overview"
+        ]
+      },
+      {
+        "group": "CLI",
+        "pages": [
+          "cli/overview",
+          "cli/doctor"
+        ]
+      },
+      {
+        "group": "API reference",
+        "openapi": "openapi.yaml",
+        "pages": [
+          "api/overview",
+          "POST /api/v1/events",
+          "POST /api/v1/identify",
+          "POST /api/v1/push-tokens",
+          "DELETE /api/v1/push-tokens",
+          "POST /api/v1/trigger",
+          "POST /api/v1/send",
+          "GET /api/v1/status"
+        ]
+      },
+      {
+        "group": "Help",
+        "pages": [
+          "troubleshooting"
+        ]
+      }
+    ]
+  }
+}

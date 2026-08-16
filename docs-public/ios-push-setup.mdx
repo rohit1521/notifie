@@ -1,0 +1,81 @@
+---
+title: "iOS push setup"
+description: "Find Apple identifiers, upload an APNs key, and register a signed physical device."
+---
+
+## Team ID
+
+The Team ID identifies the Apple Developer team that owns both the push key and the app.
+
+1. Open [Apple Developer Membership](https://developer.apple.com/account/#!/membership/).
+2. Copy the 10-character **Team ID**.
+3. Use the same team that signs the app target in Xcode.
+
+## Bundle ID
+
+The Bundle ID must exactly match the signed Xcode target that registers the device token.
+
+1. In Xcode, select the app target.
+2. Open **Signing & Capabilities**.
+3. Copy **Bundle Identifier**.
+
+<Frame>
+  <img src="/images/ios-push/01-signing-capabilities.png" alt="Xcode Signing and Capabilities with the Bundle Identifier highlighted" />
+</Frame>
+
+## Push key
+
+Notifie reads the Key ID from Apple's original filename, so there is no separate Key ID field.
+
+### 1. Name the key and enable APNs
+
+Open [Apple Developer Keys](https://developer.apple.com/account/resources/authkeys/add), enter a
+recognizable name, select **Apple Push Notifications service (APNs)**, then choose **Configure**.
+
+<Frame>
+  <img src="/images/ios-push/04-create-apns-key.png" alt="Apple Developer key form with APNs selected" />
+</Frame>
+
+### 2. Choose environment and restriction
+
+Apple allows **Sandbox & Production** on one key, but the current Notifie worker uses one APNs
+endpoint at a time. Configure `APNS_ENVIRONMENT=sandbox` for Xcode development tokens or
+`APNS_ENVIRONMENT=production` for TestFlight and App Store tokens; do not mix both token types in
+one deployment. Team Scoped works across the team's app topics; Topic Specific provides tighter
+scope.
+
+<Frame>
+  <img src="/images/ios-push/05-configure-apns-key.png" alt="Apple Developer APNs environment and restriction configuration" />
+</Frame>
+
+### 3. Register and download
+
+Confirm APNs is enabled, register the key, and download it immediately. Apple presents the download
+once. Keep the original `AuthKey_XXXXXXXXXX.p8` filename so Notifie can detect its Key ID.
+
+<Frame>
+  <img src="/images/ios-push/06-register-apns-key.png" alt="Apple Developer APNs key registration review" />
+</Frame>
+
+<Warning>
+  Do not commit or share the `.p8` file. App Store Connect API keys use the same filename pattern
+  but do not work for push.
+</Warning>
+
+## Register device
+
+Remote APNs delivery requires a signed physical iPhone or iPad.
+
+1. Open the application target's **Signing & Capabilities** tab.
+2. Choose **+ Capability**, search for **Push Notifications**, and add it.
+3. Select a connected physical device and run the app.
+4. Call `await Notifie.enableNotifications()` after Notifie initialization.
+5. Accept the system permission prompt.
+
+<Frame>
+  <img src="/images/ios-push/02-add-push-capability.png" alt="Xcode capability chooser filtered to Push Notifications" />
+</Frame>
+
+<Frame>
+  <img src="/images/ios-push/03-run-on-device.png" alt="Xcode run destination with a physical iPhone selected" />
+</Frame>

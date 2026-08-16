@@ -1,0 +1,115 @@
+name: Publish
+
+# Manual only. A tag push or merge should never be able to publish by itself:
+# npm forbids reusing a version even after an unpublish, so an accidental run
+# permanently burns a version number.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: npm dist-tag
+        required: true
+        default: beta
+        type: choice
+        options:
+          - beta
+          - latest
+      dry_run:
+        description: Pack and verify without publishing
+        type: boolean
+        default: true
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # Required for provenance.
+
+jobs:
+  npm:
+    name: npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test
+
+      # A prerelease published under "latest" becomes what every plain
+      # `npm install` resolves to. npm rejects an untagged prerelease, but it
+      # will happily honour an explicit --tag latest, so the check is here.
+      - name: Refuse a prerelease under the latest tag
+        if: ${{ inputs.tag == 'latest' }}
+        run: |
+          set -euo pipefail
+          for pkg in packages/contracts packages/cli packages/server sdks/react-native sdks/web; do
+            version="$(node -p "require('./$pkg/package.json').version")"
+            case "$version" in
+              *-*)
+                echo "::error::$pkg is a prerelease ($version) and cannot be published as latest"
+                exit 1
+                ;;
+            esac
+          done
+          echo "All packages are stable releases."
+
+      - name: Pack
+        run: |
+          set -euo pipefail
+          mkdir -p staging
+          # pnpm, not npm: @notifie/cli and @notifie/server depend on
+          # @notifie/contracts through the workspace: protocol, and only pnpm
+          # resolves that to a real version when building the tarball. npm
+          # copies it through verbatim and reports success, producing a package
+          # nobody can install.
+          for pkg in packages/contracts packages/cli packages/server sdks/react-native sdks/web; do
+            (cd "$pkg" && pnpm pack --pack-destination "$GITHUB_WORKSPACE/staging")
+          done
+          ls -1 staging
+
+      - name: Verify packed manifests
+        run: |
+          set -euo pipefail
+          for tarball in staging/*.tgz; do
+            manifest="$(tar -xzOf "$tarball" package/package.json)"
+            if printf '%s' "$manifest" | grep -q '"workspace:'; then
+              echo "::error::$tarball declares an unresolved workspace range"
+              printf '%s' "$manifest" | grep '"workspace:'
+              exit 1
+            fi
+          done
+          echo "No unresolved workspace ranges."
+
+      # Packages are uploaded in dependency order so there is never a window in
+      # which @notifie/cli is installable but @notifie/contracts is not.
+      #
+      # The ./ prefix is required. npm parses a bare "staging/name.tgz" as the
+      # GitHub owner/repo shorthand and tries to clone it over SSH rather than
+      # reading the file, which fails with an unrelated git permissions error.
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          for pkg in packages/contracts packages/cli packages/server sdks/react-native sdks/web; do
+            name="$(node -p "require('./$pkg/package.json').name.replace('@','').replace('/','-')")"
+            version="$(node -p "require('./$pkg/package.json').version")"
+            tarball="./staging/$name-$version.tgz"
+
+            args="--tag ${{ inputs.tag }} --access public --provenance --registry https://registry.npmjs.org/"
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              args="$args --dry-run"
+            fi
+
+            echo "Publishing $tarball"
+            npm publish "$tarball" $args
+          done

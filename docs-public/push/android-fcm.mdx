@@ -1,0 +1,39 @@
+---
+title: "Android and FCM setup"
+description: "Configure Firebase client files, upload sender credentials, and register a device."
+---
+
+## Firebase client configuration
+
+1. Create or select a Firebase project.
+2. Add an Android app with the exact application ID from Gradle.
+3. Download `google-services.json` into the Android app module.
+4. Apply the Google Services Gradle plugin.
+5. Add `POST_NOTIFICATIONS` to the manifest for Android 13+.
+
+`notifie init <SDK_INGEST_KEY> --yes` detects these files and applies structurally safe changes. It
+does not create Firebase credentials or put private sender credentials into the app.
+
+## Upload sender credentials
+
+Create a Firebase service account with permission to send FCM messages, download its JSON key, and
+upload it under **Integration → Push Providers** in Notifie.
+
+<Warning>
+  The service-account JSON is server-only. Do not add it to the Android project or commit it.
+</Warning>
+
+## Register and verify
+
+```kotlin
+Notifie.initialize(
+    applicationContext,
+    "<SDK_INGEST_KEY>",
+    "https://notifie.dev",
+)
+Notifie.enableNotifications()
+Notifie.track("notifie_test_notification")
+```
+
+Use a physical device or emulator with Google Play services. Foreground notification presentation
+depends on host-app behavior; provider acceptance alone does not prove the notification was shown.

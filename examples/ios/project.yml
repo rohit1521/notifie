@@ -1,0 +1,46 @@
+name: NotifieDemo
+
+# Bundle id and team come from the environment so the checked-in project holds
+# nobody's Apple account details:
+#   GK_BUNDLE_ID=com.example.notifiedemo GK_TEAM_ID=ABCDE12345 xcodegen generate
+# Both default to simulator-only values when unset.
+options:
+  bundleIdPrefix: dev.notifie
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+packages:
+  Notifie:
+    # Consumed by path so the demo always exercises the SDK in this repository,
+    # never a published copy that might have drifted.
+    path: ../../sdks/swift
+
+targets:
+  NotifieDemo:
+    type: application
+    platform: iOS
+    sources:
+      - path: NotifieDemo
+    dependencies:
+      - package: Notifie
+        product: Notifie
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ${GK_BUNDLE_ID}
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: NotifieDemo/Info.plist
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_ENTITLEMENTS: ${GK_ENTITLEMENTS}
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ${GK_TEAM_ID}
+        # A simulator build needs no identity and no team, so signing is
+        # switched off for that SDK only. Device builds still sign normally,
+        # which is what makes a real APNs token possible.
+        "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": ""
+        "CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]": NO
+        "CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]": NO
+        "DEVELOPMENT_TEAM[sdk=iphonesimulator*]": ""

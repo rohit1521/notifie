@@ -1,0 +1,47 @@
+---
+title: "Quickstart"
+description: "Connect an existing app to the hosted Notifie API and verify the first event."
+---
+
+## 1. Create an app
+
+Sign in to the [Notifie dashboard](https://notifie.dev), create an app, and
+select every platform that app ships on. Notifie shows the SDK ingest key once.
+
+<Warning>
+  Treat the full key as a credential. Do not commit it. Mobile ingest keys cannot trigger
+  audience-wide sends; those use a separate server-only key.
+</Warning>
+
+## 2. Initialize your SDK
+
+Choose a platform guide and configure the hosted base URL explicitly:
+
+```text
+https://notifie.dev
+```
+
+<CardGroup cols={2}>
+  <Card title="Swift" icon="apple" href="/sdk/swift" />
+  <Card title="Android" icon="smartphone" href="/sdk/android" />
+  <Card title="Flutter" icon="mobile" href="/sdk/flutter" />
+  <Card title="React Native" icon="atom" href="/sdk/react-native" />
+  <Card title="Web" icon="globe" href="/sdk/web" />
+</CardGroup>
+
+## 3. Track a product event
+
+Use an event name your product understands, such as `onboarding_completed` or
+`purchase_completed`. Properties must be flat strings, finite numbers, booleans, or null.
+
+```bash
+curl -X POST https://notifie.dev/api/v1/events \
+  -H "Authorization: Bearer <SDK_INGEST_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"events":[{"userId":"user-123","event":"purchase_completed","properties":{"amount":9.99}}]}'
+```
+
+## 4. Verify the connection
+
+Open **Events** in the dashboard or run `notifie doctor` from the configured app project. For
+mobile push, continue with [push setup](/push/overview) and verify on a physical device.

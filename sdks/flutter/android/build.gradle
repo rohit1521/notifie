@@ -1,0 +1,51 @@
+group = "dev.notifie.flutter"
+version = "1.0"
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.9.1"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0"
+    }
+}
+
+apply plugin: "com.android.library"
+apply plugin: "org.jetbrains.kotlin.android"
+
+android {
+    namespace = "dev.notifie.flutter"
+    compileSdk = 35
+
+    defaultConfig {
+        minSdk = 23
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+    // Resolves the SDK before it is on a public repository. Remove once
+    // dev.notifie:notifie-android is published.
+    mavenLocal()
+}
+
+dependencies {
+    // The bridge delegates to this artifact rather than scheduling itself, so
+    // persistence, reboot recovery and drift-free recurrence keep a single
+    // implementation. Source inclusion cannot work here: Android resource
+    // classes resolve against the compiling module's namespace.
+    implementation "dev.notifie:notifie-android:0.1.0-beta.2"
+}

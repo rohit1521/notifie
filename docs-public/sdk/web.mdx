@@ -1,0 +1,35 @@
+---
+title: "Web SDK"
+description: "Track browser events with a persistent anonymous identity."
+---
+
+<Warning>
+  The Web SDK is event-only. Browser push and a public identify method are not part of the current
+  contract.
+</Warning>
+
+## Install from the repository
+
+Reference `sdks/web` as a workspace or local file dependency. The package is not yet published to
+npm.
+
+```json
+{
+  "dependencies": {
+    "@notifie/web": "file:../Notifie/sdks/web"
+  }
+}
+```
+
+## Initialize and track
+
+```ts
+import { Notifie } from '@notifie/web';
+
+Notifie.initialize({
+  apiKey: '<SDK_INGEST_KEY>',
+  baseUrl: 'https://notifie.dev',
+});
+
+await Notifie.track('purchase_completed', { amount: 9.99 });
+```

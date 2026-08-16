@@ -1,0 +1,1 @@
+export 'notifie_core.dart';

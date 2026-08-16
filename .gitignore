@@ -1,0 +1,41 @@
+node_modules/
+
+# Not committed. This repository publishes libraries rather than an
+# application, and release packages do not ship the workspace lockfile.
+pnpm-lock.yaml
+
+dist/
+build/
+out/
+.gradle/
+.dart_tool/
+coverage/
+
+.env
+.env.local
+.env*.local
+
+# Provider credentials must never enter this repository.
+*.p8
+*.p12
+*.mobileprovision
+**/GoogleService-Info.plist
+**/google-services.json
+**/*service-account*.json
+notifie.json
+
+.DS_Store
+.idea/
+.vscode/
+
+sdks/swift/.build/
+sdks/swift/.swiftpm/
+sdks/flutter/.dart_tool/
+sdks/flutter/pubspec.lock
+DerivedData/
+*.xcuserdatad
+
+examples/ios/NotifieDemo.xcodeproj/
+examples/ios/build/
+examples/android/app/google-services.json
+examples/android/local.properties

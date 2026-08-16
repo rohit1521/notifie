@@ -1,0 +1,32 @@
+---
+title: "Notifie documentation"
+description: "Track product events and deliver mobile push notifications with Notifie."
+---
+
+Notifie is an event-driven workflow runtime for mobile push notifications. Add the SDK to an
+existing app, track the events your product understands, and configure delivery in the dashboard.
+
+<CardGroup cols={2}>
+  <Card title="Integrate an SDK" icon="code" href="/quickstart">
+    Connect an existing iOS, Android, Flutter, React Native, or web application.
+  </Card>
+  <Card title="Explore the API" icon="brackets-curly" href="/api/overview">
+    Send events, identify users, register devices, and trigger API automations.
+  </Card>
+</CardGroup>
+
+<Note>
+  Notifie SDK packages are currently distributed from the Notifie repository. Public package
+  registry releases are not available yet.
+</Note>
+
+## What Notifie handles
+
+- Durable event ingestion with retry-safe message IDs
+- Anonymous device identity and mobile push-token registration
+- APNs and FCM provider delivery
+- Event, schedule, recurring, inactivity, and API-triggered automations
+- A visual dashboard for events, users, audiences, flows, and delivery status
+
+Notifie currently delivers **mobile push notifications**. The Web SDK tracks events but does
+not register browser push subscriptions.

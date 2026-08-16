@@ -1,0 +1,61 @@
+---
+title: "Android SDK"
+description: "Track events and register Firebase Cloud Messaging tokens from Android."
+---
+
+<Note>
+Local notifications need no API key, no network and no Notifie account. See
+[Local notifications](/local-notifications).
+</Note>
+
+
+## Install
+
+The SDK is published on Maven Central. Depend on the coordinate:
+
+```kotlin
+dependencies {
+    implementation("dev.notifie:notifie-android:0.1.0-beta.2")
+}
+```
+
+A local Gradle module still works if you prefer to build from source:
+
+```kotlin
+include(":notifie")
+project(":notifie").projectDir = file("../Notifie/sdks/android/notifie")
+```
+
+Then add the module to the app's `dependencies` block:
+
+```kotlin
+dependencies {
+    implementation(project(":notifie"))
+}
+```
+
+## Initialize
+
+```kotlin
+import dev.notifie.Notifie
+
+Notifie.initialize(
+    applicationContext,
+    "<SDK_INGEST_KEY>",
+    "https://notifie.dev",
+)
+
+Notifie.track(
+    "purchase_completed",
+    mapOf("amount" to 9.99),
+)
+```
+
+## Enable notifications
+
+```kotlin
+Notifie.enableNotifications()
+```
+
+Android 13+ prompts for `POST_NOTIFICATIONS`. Firebase still requires `google-services.json` in
+the host app. Continue with [Android and FCM setup](/push/android-fcm).

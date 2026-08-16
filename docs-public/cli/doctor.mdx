@@ -1,0 +1,26 @@
+---
+title: "Diagnose an integration"
+description: "Use notifie doctor to separate project setup, API, provider, and delivery failures."
+---
+
+Run from the configured app root:
+
+```bash
+notifie doctor
+```
+
+The doctor checks the detected project, SDK files, native capabilities, API reachability, key
+authentication, device tokens, provider credentials, and observed events.
+
+## Interpret the result
+
+- **API unreachable**: verify `NOTIFIE_URL` or `baseUrl` uses
+  `https://notifie.dev`.
+- **Key rejected**: create a new SDK ingest key and update the app. Keys are shown once.
+- **No events**: track an event, wait for the SDK batch flush, then rerun.
+- **No device token**: request permission on a physical device and inspect native callbacks.
+- **No provider credentials**: upload APNs or FCM credentials in the dashboard.
+- **Provider accepted, nothing displayed**: inspect device-side presentation and foreground behavior.
+
+Android production calls go directly over HTTPS. `adb reverse` is only needed for localhost
+development.

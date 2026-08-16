@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  typescript:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      # No dependency cache: caching keys on a lockfile, and this repository
+      # deliberately does not commit one.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  swift:
+    name: Swift SDK
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: xcrun swift build
+        working-directory: sdks/swift
+      - run: xcrun swift test
+        working-directory: sdks/swift
+
+  flutter:
+    name: Flutter SDK
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter analyze
+        working-directory: sdks/flutter
+      - run: flutter test
+        working-directory: sdks/flutter
+
+  secrets:
+    name: Credential scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # This repository must never contain provider credentials. The stock
+      # React Native debug keystore is the one allowed exception: it is public,
+      # signs debug builds only, and is byte-identical in every RN project.
+      - name: Reject credential files
+        run: |
+          found=$(git ls-files \
+            '*.p8' '*.p12' '*.mobileprovision' '*.keystore' '*.jks' \
+            '**/google-services.json' '**/GoogleService-Info.plist' \
+            '**/*service-account*.json' '.env' \
+            | grep -v '^examples/react-native/android/app/debug.keystore$' || true)
+          if [ -n "$found" ]; then
+            echo "Credential files must not be committed:"
+            echo "$found"
+            exit 1
+          fi
+          echo "No credential files found."
+
+      # Notifie Cloud is proprietary. A reference here means private source or
+      # server-only configuration reached this repository.
+      - name: Reject Cloud references
+        run: |
+          found=$(git grep -lE '@notifie/cloud-|SUPABASE_SERVICE_ROLE_KEY|PUSH_CREDENTIALS_ENCRYPTION_KEY' \
+            -- ':!.github/workflows/ci.yml' || true)
+          if [ -n "$found" ]; then
+            echo "Notifie Cloud references must not appear in the public repository:"
+            echo "$found"
+            exit 1
+          fi
+          echo "No Cloud references found."

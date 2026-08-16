@@ -1,0 +1,32 @@
+name: notifie_flutter
+description: Notifie Device events and push notification SDK for Flutter apps.
+version: 0.1.0-beta.3
+homepage: https://notifie.dev
+repository: https://github.com/rohit1521/notifie
+issue_tracker: https://github.com/rohit1521/notifie/issues
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  firebase_core: '>=3.0.0 <5.0.0'
+  firebase_messaging: '>=15.0.0 <17.0.0'
+  flutter:
+    sdk: flutter
+  http: '>=1.2.0 <2.0.0'
+  shared_preferences: '>=2.3.0 <3.0.0'
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: dev.notifie.flutter
+        pluginClass: NotifieFlutterPlugin
+      ios:
+        pluginClass: NotifieFlutterPlugin

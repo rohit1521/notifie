@@ -1,0 +1,21 @@
+{
+  "name": "notifie",
+  "private": true,
+  "version": "0.1.0-beta.1",
+  "description": "Open-source Notifie Device SDKs, contracts, and CLI.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rohit1521/notifie.git"
+  },
+  "scripts": {
+    "build": "pnpm --filter @notifie/contracts build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "check": "pnpm build && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "packageManager": "pnpm@10.16.0"
+}

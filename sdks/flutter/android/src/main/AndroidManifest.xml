@@ -1,0 +1,22 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <permission
+        android:name="${applicationId}.permission.NOTIFIE_NOTIFICATION_OPEN"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="${applicationId}.permission.NOTIFIE_NOTIFICATION_OPEN" />
+
+    <application>
+        <activity
+            android:name=".NotifieNotificationOpenActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:permission="${applicationId}.permission.NOTIFIE_NOTIFICATION_OPEN"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="dev.notifie.NOTIFICATION_OPEN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

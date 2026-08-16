@@ -1,0 +1,55 @@
+---
+title: "Automations"
+description: "Trigger durable push workflows from events, schedules, inactivity, or a server API."
+---
+
+An automation combines a trigger, audience, notification, and delivery guarantee. Notifie stores
+work in PostgreSQL and executes it in a separate durable worker.
+
+## Trigger types
+
+| Trigger | Use case |
+| --- | --- |
+| Event | React immediately when an event arrives |
+| Delayed event | Wait after an event before delivery |
+| Scheduled | Run once at a wall-clock time |
+| Recurring | Repeat on a schedule |
+| Cron | Use a five-field expression with an explicit timezone |
+| Inactivity | Re-engage users after a quiet period |
+| API | Trigger an active automation from a server-only key |
+
+Draft automations never receive events. Activation creates the subscription. Pausing prevents
+later sends, including jobs already waiting between trigger and delivery. Archiving marks a
+one-time automation as already fired; sends it already authorized are still allowed to finish.
+
+## API-triggered delivery
+
+Create a separate key with the `send` scope. The automation owns its audience and content; the
+caller sends only its automation ID and an optional idempotency key.
+
+```bash
+curl -X POST https://notifie.dev/api/v1/send \
+  -H "Authorization: Bearer <SERVER_SEND_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"automationId":"<AUTOMATION_UUID>","idempotencyKey":"order-123"}'
+```
+
+## Trigger recipient Flows
+
+Use `POST /api/v1/trigger` when the Flow should own content and delivery policy. The request supplies
+facts and recipients, not notification copy:
+
+```json
+{
+  "event": "post_liked",
+  "to": "post-owner",
+  "data": { "actor_name": "Maya", "post_id": "post-7" },
+  "idempotencyKey": "like-42"
+}
+```
+
+## Cloud direct notifications
+
+This is a Notifie Cloud API, not the evidence-gated Notifie Direct package. Use the direct form of
+`POST /api/v1/send` only when trusted backend code must own the complete
+payload. Recipient resolution, enqueueing, and retries remain app-scoped and idempotent.
