@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { run, runChecks } from '../src/main.ts';
+import { pathToFileURL } from 'node:url';
+import { isDirectInvocation, run, runChecks } from '../src/main.ts';
 
 const VALID_KEY = `ntf_live_abcdef123456_${'a'.repeat(40)}`;
 
@@ -26,6 +27,15 @@ describe('notifie init project-root behavior', () => {
     vi.unstubAllGlobals();
     process.chdir(originalCwd);
     rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('recognizes invocation through an npm bin symlink', () => {
+    const target = join(tmpDir, 'main.js');
+    const bin = join(tmpDir, 'notifie');
+    writeFileSync(target, '');
+    symlinkSync(target, bin);
+
+    expect(isDirectInvocation(pathToFileURL(target).href, bin)).toBe(true);
   });
 
   it('rejects an empty directory without writing notifie.json', async () => {

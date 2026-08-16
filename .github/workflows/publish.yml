@@ -146,9 +146,16 @@ jobs:
         run: |
           set -euo pipefail
           for pkg in $NOTIFIE_PACKAGES; do
-            name="$(node -p "require('./$pkg/package.json').name.replace('@','').replace('/','-')")"
+            package_name="$(node -p "require('./$pkg/package.json').name")"
+            name="$(printf '%s' "$package_name" | tr -d '@' | tr '/' '-')"
             version="$(node -p "require('./$pkg/package.json').version")"
             tarball="./staging/$name-$version.tgz"
+
+            if npm view "$package_name@$version" version \
+              --registry https://registry.npmjs.org/ >/dev/null 2>&1; then
+              echo "Skipping existing immutable version $package_name@$version"
+              continue
+            fi
 
             args="--tag ${{ inputs.tag }} --access public --provenance --registry https://registry.npmjs.org/"
             if [ "${{ inputs.dry_run }}" = "true" ]; then
@@ -158,6 +165,15 @@ jobs:
             echo "Publishing $tarball"
             npm publish "$tarball" $args
           done
+
+      - name: Deprecate broken CLI beta.1
+        if: ${{ inputs.dry_run == false && inputs.verify_only == false && inputs.target == 'cli' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm deprecate @notifie-dev/cli@0.1.0-beta.1 \
+            "Broken executable entrypoint; use 0.1.0-beta.2 or newer." \
+            --registry https://registry.npmjs.org/
 
       - name: Verify published CLI
         if: ${{ inputs.dry_run == false && inputs.target == 'cli' }}

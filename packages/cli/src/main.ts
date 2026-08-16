@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import readline from 'node:readline/promises';
+import { pathToFileURL } from 'node:url';
 import { parseApiKey } from '@notifie-dev/contracts';
 import {
   NOTIFIE_TEMPLATE_CATALOG,
@@ -643,7 +644,17 @@ export async function run(argv: string[]): Promise<number> {
   }
 }
 
+/** Resolves npm's `.bin/notifie` symlink before comparing it with this module. */
+export function isDirectInvocation(moduleUrl: string, invokedPath?: string): boolean {
+  if (!invokedPath) return false;
+  try {
+    return moduleUrl === pathToFileURL(realpathSync(invokedPath)).href;
+  } catch {
+    return false;
+  }
+}
+
 // Only run when invoked directly, so tests can import `run` freely.
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop() ?? '')) {
+if (isDirectInvocation(import.meta.url, process.argv[1])) {
   run(process.argv.slice(2)).then((code) => process.exit(code));
 }
