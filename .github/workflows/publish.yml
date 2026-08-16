@@ -138,3 +138,21 @@ jobs:
             echo "Publishing $tarball"
             npm publish "$tarball" $args
           done
+
+      - name: Verify published CLI
+        if: ${{ inputs.dry_run == false && inputs.target == 'cli' }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 20); do
+            if npm view @notifie-dev/cli@beta version \
+              --registry https://registry.npmjs.org/ >/tmp/notifie-version \
+              && npx --yes --package @notifie-dev/cli@beta notifie --help \
+                | grep -q 'Notifie CLI'; then
+              echo "Verified @notifie-dev/cli@$(cat /tmp/notifie-version)"
+              exit 0
+            fi
+            echo "Waiting for npm propagation ($attempt/20)..."
+            sleep 15
+          done
+          echo "::error::Published CLI did not become installable within five minutes"
+          exit 1
