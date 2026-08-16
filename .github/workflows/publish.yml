@@ -26,6 +26,10 @@ on:
         description: Pack and verify without publishing
         type: boolean
         default: true
+      verify_only:
+        description: Skip upload and verify the existing CLI from npm
+        type: boolean
+        default: false
 
 concurrency:
   group: publish
@@ -136,6 +140,7 @@ jobs:
       # GitHub owner/repo shorthand and tries to clone it over SSH rather than
       # reading the file, which fails with an unrelated git permissions error.
       - name: Publish
+        if: ${{ inputs.verify_only == false }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -156,6 +161,9 @@ jobs:
 
       - name: Verify published CLI
         if: ${{ inputs.dry_run == false && inputs.target == 'cli' }}
+        env:
+          NODE_AUTH_TOKEN: ""
+          NPM_CONFIG_USERCONFIG: /dev/null
         run: |
           set -euo pipefail
           for attempt in $(seq 1 20); do
