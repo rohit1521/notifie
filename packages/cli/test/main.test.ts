@@ -58,7 +58,7 @@ describe('notifie init project-root behavior', () => {
   it('reports malformed config types instead of crashing', async () => {
     writeFileSync(
       join(tmpDir, 'package.json'),
-      JSON.stringify({ dependencies: { '@notifie/web': '0.1.0' } }),
+      JSON.stringify({ dependencies: { '@notifie-dev/web': '0.1.0' } }),
       'utf8',
     );
     writeFileSync(
@@ -77,7 +77,7 @@ describe('notifie init project-root behavior', () => {
   it('reads a legacy notifie.json during the beta migration', async () => {
     writeFileSync(
       join(tmpDir, 'package.json'),
-      JSON.stringify({ dependencies: { '@notifie/web': '0.1.0' } }),
+      JSON.stringify({ dependencies: { '@notifie-dev/web': '0.1.0' } }),
       'utf8',
     );
     writeFileSync(
@@ -125,7 +125,7 @@ describe('notifie init project-root behavior', () => {
   it('does not report test-push success for an unrelated HTTP 200', async () => {
     writeFileSync(
       join(tmpDir, 'package.json'),
-      JSON.stringify({ dependencies: { '@notifie/web': '0.1.0' } }),
+      JSON.stringify({ dependencies: { '@notifie-dev/web': '0.1.0' } }),
       'utf8',
     );
     writeFileSync(
@@ -151,7 +151,7 @@ describe('notifie init project-root behavior', () => {
   it('rejects a test-push receipt that did not insert or deduplicate the event', async () => {
     writeFileSync(
       join(tmpDir, 'package.json'),
-      JSON.stringify({ dependencies: { '@notifie/web': '0.1.0' } }),
+      JSON.stringify({ dependencies: { '@notifie-dev/web': '0.1.0' } }),
       'utf8',
     );
     writeFileSync(
@@ -180,7 +180,7 @@ describe('notifie init project-root behavior', () => {
   it('rejects fractional test-push receipt counters', async () => {
     writeFileSync(
       join(tmpDir, 'package.json'),
-      JSON.stringify({ dependencies: { '@notifie/web': '0.1.0' } }),
+      JSON.stringify({ dependencies: { '@notifie-dev/web': '0.1.0' } }),
       'utf8',
     );
     writeFileSync(
@@ -212,7 +212,7 @@ describe('notifie init project-root behavior', () => {
     );
     writeFileSync(
       join(tmpDir, 'package.json'),
-      JSON.stringify({ dependencies: { '@notifie/react-native': '0.1.0' } }),
+      JSON.stringify({ dependencies: { '@notifie-dev/react-native': '0.1.0' } }),
       'utf8',
     );
     writeFileSync(
@@ -258,7 +258,7 @@ describe('notifie init project-root behavior', () => {
     );
     writeFileSync(
       join(tmpDir, 'package.json'),
-      JSON.stringify({ dependencies: { '@notifie/react-native': '0.1.0' } }),
+      JSON.stringify({ dependencies: { '@notifie-dev/react-native': '0.1.0' } }),
       'utf8',
     );
     const androidApp = join(tmpDir, 'android', 'app');

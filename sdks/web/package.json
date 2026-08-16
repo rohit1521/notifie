@@ -1,5 +1,5 @@
 {
-  "name": "@notifie/web",
+  "name": "@notifie-dev/web",
   "version": "0.1.0-beta.1",
   "description": "Notifie Device event SDK for web applications.",
   "license": "Apache-2.0",

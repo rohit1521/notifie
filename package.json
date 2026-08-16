@@ -9,7 +9,7 @@
     "url": "git+https://github.com/rohit1521/notifie.git"
   },
   "scripts": {
-    "build": "pnpm --filter @notifie/contracts build",
+    "build": "pnpm --filter @notifie-dev/contracts build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "check": "pnpm build && pnpm typecheck && pnpm test"

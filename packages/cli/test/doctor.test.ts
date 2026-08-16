@@ -238,9 +238,9 @@ describe('checkProjectDetected', () => {
 
 describe('checkSdkPresent', () => {
   it('passes when a recognized SDK package is in deps', () => {
-    expect(checkSdkPresent({ '@notifie/expo': '1.0.0' }).status).toBe('pass');
-    expect(checkSdkPresent({ '@notifie/react-native': '1.0.0' }).status).toBe('pass');
-    expect(checkSdkPresent({ '@notifie/web': '1.0.0' }).status).toBe('pass');
+    expect(checkSdkPresent({ '@notifie-dev/expo': '1.0.0' }).status).toBe('pass');
+    expect(checkSdkPresent({ '@notifie-dev/react-native': '1.0.0' }).status).toBe('pass');
+    expect(checkSdkPresent({ '@notifie-dev/web': '1.0.0' }).status).toBe('pass');
     expect(checkSdkPresent({ notifie_flutter: '1.0.0' }).status).toBe('pass');
   });
 

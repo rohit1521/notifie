@@ -2,11 +2,11 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import readline from 'node:readline/promises';
-import { parseApiKey } from '@notifie/contracts';
+import { parseApiKey } from '@notifie-dev/contracts';
 import {
   NOTIFIE_TEMPLATE_CATALOG,
   findTemplateMetadata,
-} from '@notifie/contracts/templates';
+} from '@notifie-dev/contracts/templates';
 import {
   DEFAULT_BASE_URL,
   checkApiKey,

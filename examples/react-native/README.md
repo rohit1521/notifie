@@ -21,8 +21,8 @@ adb reverse tcp:8081 tcp:8081
 5. Start and install the app:
 
 ```bash
-pnpm --filter @notifie/react-native-example start
-pnpm --filter @notifie/react-native-example android
+pnpm --filter @notifie-dev/react-native-example start
+pnpm --filter @notifie-dev/react-native-example android
 ```
 
 Enter an SDK ingest key and base URL in the harness. No credentials are stored
@@ -31,10 +31,10 @@ in this repository.
 ## Validate
 
 ```bash
-pnpm --filter @notifie/react-native-example typecheck
-pnpm --filter @notifie/react-native-example lint
-pnpm --filter @notifie/react-native-example test
-pnpm --filter @notifie/react-native-example android:build
+pnpm --filter @notifie-dev/react-native-example typecheck
+pnpm --filter @notifie-dev/react-native-example lint
+pnpm --filter @notifie-dev/react-native-example test
+pnpm --filter @notifie-dev/react-native-example android:build
 ```
 
 The Jest workflow uses an injected facade and proves the complete host

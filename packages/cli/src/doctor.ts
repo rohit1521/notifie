@@ -1,4 +1,4 @@
-import { parseApiKey } from '@notifie/contracts';
+import { parseApiKey } from '@notifie-dev/contracts';
 import type { ProjectType } from './detect.ts';
 import {
   plistHasBackgroundMode,
@@ -279,12 +279,12 @@ export function checkProjectDetected(type: ProjectType): CheckResult {
 /** Pass `pkg.dependencies` merged with `pkg.devDependencies`. */
 export function checkSdkPresent(deps: Record<string, unknown>): CheckResult {
   const sdkPackages = [
-    '@notifie/react-native',
-    '@notifie/web',
-    '@notifie/expo',
-    '@notifie/react-native',
-    '@notifie/web',
-    '@notifie/expo',
+    '@notifie-dev/react-native',
+    '@notifie-dev/web',
+    '@notifie-dev/expo',
+    '@notifie-dev/react-native',
+    '@notifie-dev/web',
+    '@notifie-dev/expo',
     'notifie_flutter',
     'notifie_flutter',
   ];

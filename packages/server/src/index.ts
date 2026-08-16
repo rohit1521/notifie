@@ -7,7 +7,7 @@ import {
   type EventProperties,
   type NotifyCommandInput,
   type TriggerCommandInput,
-} from '@notifie/contracts';
+} from '@notifie-dev/contracts';
 
 export type {
   EventProperties,
@@ -18,7 +18,7 @@ export type {
   TriggerCommand,
   TriggerCommandInput,
   TriggerRequest,
-} from '@notifie/contracts';
+} from '@notifie-dev/contracts';
 
 export type NotifieFetch = (
   input: string | URL | Request,

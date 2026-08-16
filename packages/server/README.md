@@ -3,7 +3,7 @@
 One server client owns four operations: `identify`, `track`, `trigger`, and `notify`.
 
 ```ts
-import { Notifie } from '@notifie/server';
+import { Notifie } from '@notifie-dev/server';
 
 const growth = new Notifie({
   ingestKey: process.env.NOTIFIE_INGEST_KEY,

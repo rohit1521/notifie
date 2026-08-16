@@ -86,7 +86,7 @@ describe('detectProject', () => {
   });
 
   it('detects the legacy web SDK during the beta migration', () => {
-    write('package.json', JSON.stringify({ dependencies: { '@notifie/web': '0.1.0' } }));
+    write('package.json', JSON.stringify({ dependencies: { '@notifie-dev/web': '0.1.0' } }));
     expect(detectProject(tmpDir).type).toBe('web');
   });
 

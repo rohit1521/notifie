@@ -3,10 +3,10 @@ import ReactTestRenderer, { act } from 'react-test-renderer';
 import type {
   NotifieNotification,
   NotifieProperties,
-} from '@notifie/react-native';
+} from '@notifie-dev/react-native';
 import { Harness, type DemoSdk } from '../App';
 
-jest.mock('@notifie/react-native', () => ({ Notifie: {} }));
+jest.mock('@notifie-dev/react-native', () => ({ Notifie: {} }));
 
 it('drives the complete Notifie host workflow', async () => {
   const sdk = new FakeDemoSdk();

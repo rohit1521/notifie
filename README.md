@@ -12,11 +12,11 @@ same SDKs — adopting it does not require changing SDK.
 
 | Package | Description |
 | --- | --- |
-| [`@notifie/contracts`](packages/contracts) | Event, identity, push token and notification wire contracts |
-| [`@notifie/cli`](packages/cli) | Project setup and integration diagnostics |
-| [`@notifie/server`](packages/server) | Server SDK for events and notifications |
-| [`@notifie/react-native`](sdks/react-native) | React Native SDK |
-| [`@notifie/web`](sdks/web) | Browser SDK |
+| [`@notifie-dev/contracts`](packages/contracts) | Event, identity, push token and notification wire contracts |
+| [`@notifie-dev/cli`](packages/cli) | Project setup and integration diagnostics |
+| [`@notifie-dev/server`](packages/server) | Server SDK for events and notifications |
+| [`@notifie-dev/react-native`](sdks/react-native) | React Native SDK |
+| [`@notifie-dev/web`](sdks/web) | Browser SDK |
 | [Swift](sdks/swift) | iOS/macOS SDK |
 | [Android](sdks/android) | Android SDK |
 | [Flutter](sdks/flutter) | Flutter SDK |

@@ -91,8 +91,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p staging
-          # pnpm, not npm: @notifie/cli and @notifie/server depend on
-          # @notifie/contracts through the workspace: protocol, and only pnpm
+          # pnpm, not npm: @notifie-dev/cli and @notifie-dev/server depend on
+          # @notifie-dev/contracts through the workspace: protocol, and only pnpm
           # resolves that to a real version when building the tarball. npm
           # copies it through verbatim and reports success, producing a package
           # nobody can install.
@@ -115,7 +115,7 @@ jobs:
           echo "No unresolved workspace ranges."
 
       # Packages are uploaded in dependency order so there is never a window in
-      # which @notifie/cli is installable but @notifie/contracts is not.
+      # which @notifie-dev/cli is installable but @notifie-dev/contracts is not.
       #
       # The ./ prefix is required. npm parses a bare "staging/name.tgz" as the
       # GitHub owner/repo shorthand and tries to clone it over SSH rather than

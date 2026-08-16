@@ -13,7 +13,7 @@ description: "Track events, identify users, trigger Flows, and send direct notif
 ```json
 {
   "dependencies": {
-    "@notifie/server": "workspace:*"
+    "@notifie-dev/server": "workspace:*"
   }
 }
 ```
@@ -21,7 +21,7 @@ description: "Track events, identify users, trigger Flows, and send direct notif
 ## Configure
 
 ```ts
-import { Notifie } from '@notifie/server';
+import { Notifie } from '@notifie-dev/server';
 
 const growth = new Notifie({
   ingestKey: process.env.NOTIFIE_INGEST_KEY,

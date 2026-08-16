@@ -1,5 +1,5 @@
 {
-  "name": "@notifie/contracts",
+  "name": "@notifie-dev/contracts",
   "version": "0.1.0-beta.1",
   "description": "Public Notifie event, identity, push token, and notification contracts.",
   "type": "module",

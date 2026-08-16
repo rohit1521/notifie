@@ -247,7 +247,7 @@ export function detectProject(cwd = process.cwd()): ProjectInfo {
         ...((pkg.devDependencies as Record<string, unknown>) ?? {}),
       };
       const webMarkers = [
-        '@angular/core', '@notifie/web', '@notifie/web', 'astro', 'next', 'nuxt', 'react',
+        '@angular/core', '@notifie-dev/web', '@notifie-dev/web', 'astro', 'next', 'nuxt', 'react',
         'svelte', 'vite', 'vue',
       ];
       if (webMarkers.some((marker) => marker in deps)) {

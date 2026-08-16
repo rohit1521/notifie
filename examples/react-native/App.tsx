@@ -14,7 +14,7 @@ import {
   Notifie,
   type NotifieNotification,
   type NotifieProperties,
-} from '@notifie/react-native';
+} from '@notifie-dev/react-native';
 
 export interface DemoSdk {
   initialize(options: {

@@ -1,5 +1,5 @@
 {
-  "name": "@notifie/server",
+  "name": "@notifie-dev/server",
   "version": "0.1.0-beta.1",
   "description": "Notifie Cloud HTTP client for trusted server environments.",
   "license": "Apache-2.0",
@@ -24,7 +24,7 @@
     "pack:check": "pnpm pack --pack-destination .pack"
   },
   "dependencies": {
-    "@notifie/contracts": "workspace:*"
+    "@notifie-dev/contracts": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.18.1",

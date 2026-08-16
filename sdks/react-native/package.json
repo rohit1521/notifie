@@ -1,5 +1,5 @@
 {
-  "name": "@notifie/react-native",
+  "name": "@notifie-dev/react-native",
   "version": "0.1.0-beta.1",
   "description": "Notifie Device SDK for React Native.",
   "license": "Apache-2.0",

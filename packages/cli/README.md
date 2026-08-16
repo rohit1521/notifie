@@ -5,7 +5,7 @@ Project setup and diagnostics for Notifie integrations.
 ## Run without installing
 
 ```bash
-npx @notifie/cli@beta doctor
+npx @notifie-dev/cli@beta doctor
 ```
 
 ## Commands

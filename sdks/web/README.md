@@ -3,7 +3,7 @@
 The Web SDK owns anonymous browser identity and event delivery.
 
 ```ts
-import { Notifie } from '@notifie/web';
+import { Notifie } from '@notifie-dev/web';
 
 Notifie.initialize({ apiKey: '<SDK_INGEST_KEY>' });
 await Notifie.track('notification_requested');

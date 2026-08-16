@@ -7,7 +7,7 @@ cleanup behind one React Native API.
 ## Install
 
 ```bash
-pnpm add @notifie/react-native \
+pnpm add @notifie-dev/react-native \
 	@react-native-async-storage/async-storage \
 	@react-native-firebase/app \
 	@react-native-firebase/messaging
@@ -19,7 +19,7 @@ Firebase service-account key or Notifie server send key in a mobile app.
 ## Initialize
 
 ```tsx
-import { Notifie } from '@notifie/react-native';
+import { Notifie } from '@notifie-dev/react-native';
 
 await Notifie.initialize({
 	apiKey: '<SDK_INGEST_KEY>',
