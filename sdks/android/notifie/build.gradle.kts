@@ -15,7 +15,7 @@ plugins {
  * coordinate is the only mechanism that serves both a monorepo bridge and a
  * published consumer.
  */
-val notifieVersion = "0.1.0-beta.2"
+val notifieVersion = "0.1.0-beta.3"
 
 android {
     namespace = "dev.notifie"

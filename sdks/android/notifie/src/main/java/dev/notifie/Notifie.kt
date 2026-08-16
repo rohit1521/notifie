@@ -187,16 +187,118 @@ public object Notifie {
         notification: LocalNotification,
     ): LocalScheduleResult = LocalNotificationScheduler.schedule(context, notification)
 
+    /** Schedules a daily wall-clock reminder. */
+    @JvmStatic
+    @JvmOverloads
+    public fun scheduleDaily(
+        context: Context,
+        id: String,
+        title: String,
+        body: String,
+        hour: Int,
+        minute: Int = 0,
+        deepLink: String? = null,
+    ): LocalScheduleResult = schedule(
+        context,
+        LocalNotification(
+            id = id,
+            title = title,
+            body = body,
+            schedule = LocalSchedule.Daily(hour = hour, minute = minute),
+            deepLink = deepLink,
+        ),
+    )
+
+    /** Schedules a one-time reminder after a delay. */
+    @JvmStatic
+    @JvmOverloads
+    public fun scheduleAfter(
+        context: Context,
+        id: String,
+        title: String,
+        body: String,
+        seconds: Long,
+        deepLink: String? = null,
+    ): LocalScheduleResult = schedule(
+        context,
+        LocalNotification(
+            id = id,
+            title = title,
+            body = body,
+            schedule = LocalSchedule.After(seconds = seconds),
+            deepLink = deepLink,
+        ),
+    )
+
+    /** Schedules a one-time reminder at an absolute Unix time in milliseconds. */
+    @JvmStatic
+    @JvmOverloads
+    public fun scheduleAt(
+        context: Context,
+        id: String,
+        title: String,
+        body: String,
+        epochMillis: Long,
+        deepLink: String? = null,
+    ): LocalScheduleResult = schedule(
+        context,
+        LocalNotification(
+            id = id,
+            title = title,
+            body = body,
+            schedule = LocalSchedule.At(epochMillis = epochMillis),
+            deepLink = deepLink,
+        ),
+    )
+
+    /** Schedules a weekly reminder. Monday is 1 and Sunday is 7. */
+    @JvmStatic
+    @JvmOverloads
+    public fun scheduleWeekly(
+        context: Context,
+        id: String,
+        title: String,
+        body: String,
+        weekday: Int,
+        hour: Int,
+        minute: Int = 0,
+        deepLink: String? = null,
+    ): LocalScheduleResult = schedule(
+        context,
+        LocalNotification(
+            id = id,
+            title = title,
+            body = body,
+            schedule = LocalSchedule.Weekly(
+                weekday = weekday,
+                hour = hour,
+                minute = minute,
+            ),
+            deepLink = deepLink,
+        ),
+    )
+
     /** Cancels a pending local notification. Unknown IDs are ignored. */
     @JvmStatic
-    public fun cancelScheduled(context: Context, id: String) {
+    public fun cancel(context: Context, id: String) {
         LocalNotificationScheduler.cancel(context, id)
     }
 
     /** Local notifications this SDK scheduled that have not yet fired. */
     @JvmStatic
-    public fun pendingScheduled(context: Context): List<PendingLocalNotification> =
+    public fun pending(context: Context): List<PendingLocalNotification> =
         LocalNotificationScheduler.pending(context)
+
+    /** Cancels a pending local notification. Unknown IDs are ignored. */
+    @JvmStatic
+    public fun cancelScheduled(context: Context, id: String) {
+        cancel(context, id)
+    }
+
+    /** Local notifications this SDK scheduled that have not yet fired. */
+    @JvmStatic
+    public fun pendingScheduled(context: Context): List<PendingLocalNotification> =
+        pending(context)
 
     internal fun recordNotificationReceived(context: Context, data: Map<String, String>) {
         val invocationId = data[invocationIdKey]

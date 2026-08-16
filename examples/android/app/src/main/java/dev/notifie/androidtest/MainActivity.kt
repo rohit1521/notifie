@@ -94,27 +94,30 @@ class MainActivity : Activity() {
      * No API key, no network and no `initialize()` — try it in airplane mode.
      */
     private fun scheduleLocal(soon: Boolean) {
-        val notification = if (soon) {
-            LocalNotification(
+        val id = if (soon) "demo-soon" else "demo-daily"
+        val result = if (soon) {
+            Notifie.scheduleAfter(
+                applicationContext,
                 id = "demo-soon",
                 title = "Ten seconds later",
                 body = "Scheduled locally with no account and no network.",
-                schedule = LocalSchedule.After(seconds = 10),
+                seconds = 10,
             )
         } else {
-            LocalNotification(
+            Notifie.scheduleDaily(
+                applicationContext,
                 id = "demo-daily",
                 title = "Daily practice",
                 body = "Repeats at 09:00 local time, including across DST.",
-                schedule = LocalSchedule.Daily(hour = 9, minute = 0),
+                hour = 9,
             )
         }
 
-        status.text = when (val result = Notifie.schedule(applicationContext, notification)) {
+        status.text = when (result) {
             is LocalScheduleResult.Scheduled ->
                 // Precision is reported rather than assumed: Android downgrades
                 // exact alarms when the 12+ permission is absent.
-                "Scheduled ${notification.id} (${result.precision})"
+                "Scheduled $id (${result.precision})"
             is LocalScheduleResult.Failed ->
                 "Not scheduled: ${result.error} ${result.message.orEmpty()}"
         }
@@ -122,9 +125,9 @@ class MainActivity : Activity() {
 
     private fun cancelLocal() {
         // Cancelling something that was never scheduled is harmless.
-        Notifie.cancelScheduled(applicationContext, "demo-soon")
-        Notifie.cancelScheduled(applicationContext, "demo-daily")
-        val remaining = Notifie.pendingScheduled(applicationContext).size
+        Notifie.cancel(applicationContext, "demo-soon")
+        Notifie.cancel(applicationContext, "demo-daily")
+        val remaining = Notifie.pending(applicationContext).size
         status.text = "Cancelled local reminders ($remaining pending)"
     }
 

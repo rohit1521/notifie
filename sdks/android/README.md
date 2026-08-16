@@ -13,20 +13,34 @@ complete Notifie API:
 ```kotlin
 import dev.notifie.*
 
-val result = Notifie.schedule(
+val result = Notifie.scheduleDaily(
     context,
-    LocalNotification(
-        id = "daily-practice",
-        title = "Time to practise",
-        body = "Your streak is waiting.",
-        schedule = LocalSchedule.Daily(hour = 9, minute = 0),
-        deepLink = "myapp://practice",
-    ),
+    id = "daily-practice",
+    title = "Time to practise",
+    body = "Your streak is waiting.",
+    hour = 9,
+    deepLink = "myapp://practice",
 )
 
-Notifie.cancelScheduled(context, "daily-practice")
-val pending = Notifie.pendingScheduled(context)
+Notifie.cancel(context, "daily-practice")
+val pending = Notifie.pending(context)
 ```
+
+One-time reminders are equally direct:
+
+```kotlin
+Notifie.scheduleAfter(
+    context,
+    id = "break-finished",
+    title = "Break finished",
+    body = "Ready to continue?",
+    seconds = 300,
+)
+```
+
+Use `scheduleAt` or `scheduleWeekly` for the other common schedules. The
+lower-level `schedule(LocalNotification(...))` API remains available for custom
+data, channels, exact-alarm requests, grouping, and other advanced options.
 
 Schedules are `At(epochMillis)`, `After(seconds)`, `Daily(hour, minute)` and
 `Weekly(weekday, hour, minute)`, where Monday is 1 and Sunday is 7.

@@ -74,6 +74,41 @@ class LocalNotificationTest {
     }
 
     @Test
+    fun `daily convenience API constructs and persists the common reminder`() {
+        val result = Notifie.scheduleDaily(
+            application,
+            id = "practice",
+            title = "Time to practise",
+            body = "Your streak is waiting.",
+            hour = 9,
+            deepLink = "myapp://practice",
+        )
+
+        assertTrue(result is LocalScheduleResult.Scheduled)
+        val stored = LocalNotificationStore.load(application, "practice")
+        assertEquals(LocalSchedule.Daily(hour = 9, minute = 0), stored?.schedule)
+        assertEquals("myapp://practice", stored?.deepLink)
+    }
+
+    @Test
+    fun `short cancel and pending APIs are idempotent`() {
+        Notifie.scheduleAfter(
+            application,
+            id = "later",
+            title = "Come back",
+            body = "Your timer finished.",
+            seconds = 60,
+        )
+
+        assertEquals(listOf("later"), Notifie.pending(application).map { it.id })
+
+        Notifie.cancel(application, "later")
+        Notifie.cancel(application, "later")
+
+        assertTrue(Notifie.pending(application).isEmpty())
+    }
+
+    @Test
     fun `schedule is persisted so it survives process death`() {
         LocalNotificationScheduler.schedule(application, reminder(id = "streak"))
 
