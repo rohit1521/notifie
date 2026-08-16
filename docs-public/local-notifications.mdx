@@ -35,9 +35,7 @@ let result = await Notifie.schedule(
 ```
 
 ```kotlin Android
-import dev.notifie.LocalNotification
-import dev.notifie.LocalSchedule
-import dev.notifie.Notifie
+import dev.notifie.*
 
 val result = Notifie.schedule(
     context,
@@ -50,6 +48,10 @@ val result = Notifie.schedule(
     ),
 )
 ```
+
+Kotlin imports packages rather than modules. All Android SDK types live in
+`dev.notifie`, so the single wildcard import is the Android equivalent of
+Swift's `import Notifie`.
 
 ```dart Flutter
 import 'package:notifie_flutter/notifie_flutter.dart';

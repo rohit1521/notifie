@@ -7,12 +7,11 @@ event batching, retries, and logout-safe token revocation.
 ## Local notifications, without an account
 
 Local notifications need no API key, no network and no `initialize()` call.
+Kotlin imports packages rather than modules, so one wildcard import exposes the
+complete Notifie API:
 
 ```kotlin
-import dev.notifie.LocalNotification
-import dev.notifie.LocalSchedule
-import dev.notifie.LocalScheduleResult
-import dev.notifie.Notifie
+import dev.notifie.*
 
 val result = Notifie.schedule(
     context,

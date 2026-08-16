@@ -7,11 +7,7 @@ import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
-import dev.notifie.NotificationEnrollment
-import dev.notifie.LocalNotification
-import dev.notifie.LocalSchedule
-import dev.notifie.LocalScheduleResult
-import dev.notifie.Notifie
+import dev.notifie.*
 
 class MainActivity : Activity() {
     private lateinit var status: TextView
