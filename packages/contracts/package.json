@@ -4,6 +4,13 @@
   "description": "Public Notifie event, identity, push token, and notification contracts.",
   "type": "module",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rohit1521/notifie.git",
+    "directory": "packages/contracts"
+  },
+  "homepage": "https://notifie.dev",
+  "bugs": "https://github.com/rohit1521/notifie/issues",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

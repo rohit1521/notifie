@@ -3,6 +3,13 @@
   "version": "0.1.0-beta.1",
   "description": "Notifie Cloud HTTP client for trusted server environments.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rohit1521/notifie.git",
+    "directory": "packages/server"
+  },
+  "homepage": "https://notifie.dev",
+  "bugs": "https://github.com/rohit1521/notifie/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

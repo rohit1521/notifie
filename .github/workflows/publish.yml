@@ -111,8 +111,23 @@ jobs:
               printf '%s' "$manifest" | grep '"workspace:'
               exit 1
             fi
+            repository="$(printf '%s' "$manifest" | node -e '
+              let input = "";
+              process.stdin.on("data", (chunk) => input += chunk);
+              process.stdin.on("end", () => {
+                const value = JSON.parse(input).repository;
+                console.log(typeof value === "string" ? value : value?.url ?? "");
+              });
+            ')"
+            case "$repository" in
+              *github.com/rohit1521/notifie*) ;;
+              *)
+                echo "::error::$tarball has invalid repository metadata: $repository"
+                exit 1
+                ;;
+            esac
           done
-          echo "No unresolved workspace ranges."
+          echo "Packed manifests have resolved dependencies and valid repository metadata."
 
       # Packages are uploaded in dependency order so there is never a window in
       # which @notifie-dev/cli is installable but @notifie-dev/contracts is not.
