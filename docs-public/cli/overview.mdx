@@ -4,16 +4,20 @@ description: "Configure an existing native or cross-platform project and inspect
 ---
 
 <Note>
-  The CLI currently ships from the Notifie repository and is not published as a standalone npm
-  package. Private-beta repository access is required. Link the workspace CLI so the `notifie`
-  command is available before using these commands.
+  The CLI is published on npm as `@notifie-dev/cli`. The current public beta is
+  `0.1.0-beta.2`.
 </Note>
 
-From the Notifie repository:
+Run without installing:
 
 ```bash
-cd packages/cli
-pnpm link --global
+npx @notifie-dev/cli@beta --help
+```
+
+Or install the beta globally:
+
+```bash
+npm install --global @notifie-dev/cli@beta
 notifie --help
 ```
 
