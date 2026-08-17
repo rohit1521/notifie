@@ -44,7 +44,14 @@ final class FirebasePushTokenProvider extends PushTokenProvider {
       StreamController<NotifieNotification>.broadcast();
   static bool _nativeOpenBridgeAttached = false;
 
-  static void registerBackgroundHandler() {
+  static Future<void> registerBackgroundHandler() async {
+    // Firebase must exist before the handler is registered.
+    // `onBackgroundMessage` returns void but dispatches to a platform channel,
+    // so with the plugin absent it fails as an unhandled asynchronous error
+    // that no caller can catch — a synchronous try/catch around it sees
+    // nothing. Establishing Firebase first turns an unconfigured project into
+    // a failure the caller can actually handle.
+    if (Firebase.apps.isEmpty) await Firebase.initializeApp();
     FirebaseMessaging.onBackgroundMessage(notifieFirebaseBackgroundHandler);
   }
 

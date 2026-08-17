@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.0-beta.5
+
+### Fixed
+
+- `Notifie.initialize` no longer leaks an unhandled asynchronous error when
+  Firebase is not configured. The 0.1.0-beta.4 guard could not catch this one:
+  `FirebaseMessaging.onBackgroundMessage` returns `void` but dispatches to a
+  platform channel, so the failure surfaced after the surrounding `try` had
+  already returned. The background handler is now registered only once Firebase
+  has been established, so an unconfigured project is reported through `onError`
+  like every other optional-push failure.
+
 ## 0.1.0-beta.4
 
 ### Fixed

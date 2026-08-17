@@ -86,9 +86,9 @@ final class Notifie {
     final store = SharedPreferencesNotifieStore(preferences);
     await _disposeCurrentClient();
     if (registerFirebaseBackgroundHandler) {
-      _reportOptionalPushFailure(
+      await _reportOptionalPushFailureAsync(
         onError,
-        () => FirebasePushTokenProvider.registerBackgroundHandler(),
+        FirebasePushTokenProvider.registerBackgroundHandler,
       );
     }
 
@@ -156,17 +156,6 @@ final class Notifie {
   // Remote push depends on Firebase, which most projects add only after their
   // first event has arrived. These helpers keep that dependency optional
   // during initialization instead of failing the whole SDK.
-  static void _reportOptionalPushFailure(
-    NotifieErrorCallback? onError,
-    void Function() action,
-  ) {
-    try {
-      action();
-    } on Object catch (error) {
-      onError?.call(_pushUnavailable(error));
-    }
-  }
-
   static Future<void> _reportOptionalPushFailureAsync(
     NotifieErrorCallback? onError,
     Future<void> Function() action,
