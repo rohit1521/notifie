@@ -86,7 +86,10 @@ final class Notifie {
     final store = SharedPreferencesNotifieStore(preferences);
     await _disposeCurrentClient();
     if (registerFirebaseBackgroundHandler) {
-      FirebasePushTokenProvider.registerBackgroundHandler();
+      _reportOptionalPushFailure(
+        onError,
+        () => FirebasePushTokenProvider.registerBackgroundHandler(),
+      );
     }
 
     final client = NotifieClient(
@@ -107,7 +110,14 @@ final class Notifie {
     _NotifieLifecycleObserver? observer;
     try {
       await client.start();
-      await client.attachPushProvider();
+      // Remote push is optional. A project without Firebase configured must
+      // still track events and schedule local notifications, so a failure to
+      // attach the push provider is reported and then tolerated here. An
+      // explicit enableNotifications() call still throws.
+      await _reportOptionalPushFailureAsync(
+        onError,
+        client.attachPushProvider,
+      );
       for (final pending
           in await FirebasePushTokenProvider.pendingNotifications()) {
         await client.recordNotificationReceived(pending.notification);
@@ -142,6 +152,38 @@ final class Notifie {
       rethrow;
     }
   }
+
+  // Remote push depends on Firebase, which most projects add only after their
+  // first event has arrived. These helpers keep that dependency optional
+  // during initialization instead of failing the whole SDK.
+  static void _reportOptionalPushFailure(
+    NotifieErrorCallback? onError,
+    void Function() action,
+  ) {
+    try {
+      action();
+    } on Object catch (error) {
+      onError?.call(_pushUnavailable(error));
+    }
+  }
+
+  static Future<void> _reportOptionalPushFailureAsync(
+    NotifieErrorCallback? onError,
+    Future<void> Function() action,
+  ) async {
+    try {
+      await action();
+    } on Object catch (error) {
+      onError?.call(_pushUnavailable(error));
+    }
+  }
+
+  static NotifieException _pushUnavailable(Object error) => NotifieException(
+        'Remote push is unavailable, so Notifie started without it. Events and '
+        'local notifications still work. Add google-services.json (Android) or '
+        'GoogleService-Info.plist (iOS), then call enableNotifications() to '
+        'turn on remote push. Cause: $error',
+      );
 
   static Future<void> identify(
     String userId, {

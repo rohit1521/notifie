@@ -311,19 +311,40 @@ final class NotifieClient {
   Future<void> attachPushProvider() async {
     if (_pushProviderAttached) return;
     _pushProviderAttached = true;
-    await _pushTokenProvider.prepare();
-    _tokenRefreshSubscription = _pushTokenProvider.tokenRefreshes.listen(
-      (token) => _runDetached(_handleTokenRefresh(token)),
-    );
-    _receivedSubscription = _pushTokenProvider.foregroundNotifications.listen(
-      (notification) => _runDetached(recordNotificationReceived(notification)),
-    );
-    _openedSubscription = _pushTokenProvider.openedNotifications.listen(
-      (notification) => _runDetached(recordNotificationOpened(notification)),
-    );
-    await _pushTokenProvider.notificationListenersAttached();
-    final initial = await _pushTokenProvider.initialNotification();
-    if (initial != null) await recordNotificationOpened(initial);
+    try {
+      await _pushTokenProvider.prepare();
+      _tokenRefreshSubscription = _pushTokenProvider.tokenRefreshes.listen(
+        (token) => _runDetached(_handleTokenRefresh(token)),
+      );
+      _receivedSubscription = _pushTokenProvider.foregroundNotifications.listen(
+        (notification) => _runDetached(recordNotificationReceived(notification)),
+      );
+      _openedSubscription = _pushTokenProvider.openedNotifications.listen(
+        (notification) => _runDetached(recordNotificationOpened(notification)),
+      );
+      await _pushTokenProvider.notificationListenersAttached();
+      final initial = await _pushTokenProvider.initialNotification();
+      if (initial != null) await recordNotificationOpened(initial);
+    } on Object {
+      // A failed attach must not be recorded as a successful one. Otherwise a
+      // later retry returns early and the notification listeners stay detached
+      // for the rest of the process lifetime.
+      _pushProviderAttached = false;
+      await _cancelPushSubscriptions();
+      rethrow;
+    }
+  }
+
+  Future<void> _cancelPushSubscriptions() async {
+    await Future.wait([
+      if (_tokenRefreshSubscription != null)
+        _tokenRefreshSubscription!.cancel(),
+      if (_receivedSubscription != null) _receivedSubscription!.cancel(),
+      if (_openedSubscription != null) _openedSubscription!.cancel(),
+    ]);
+    _tokenRefreshSubscription = null;
+    _receivedSubscription = null;
+    _openedSubscription = null;
   }
 
   Future<void> registerPushToken(PushToken token) =>
@@ -557,12 +578,7 @@ final class NotifieClient {
     _closed = true;
     _flushTimer?.cancel();
     _retryTimer?.cancel();
-    await Future.wait([
-      if (_tokenRefreshSubscription != null)
-        _tokenRefreshSubscription!.cancel(),
-      if (_receivedSubscription != null) _receivedSubscription!.cancel(),
-      if (_openedSubscription != null) _openedSubscription!.cancel(),
-    ]);
+    await _cancelPushSubscriptions();
     final inFlight = _flushFuture;
     if (inFlight != null) await inFlight;
     _httpClient.close();

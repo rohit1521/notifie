@@ -84,7 +84,7 @@ describe('notifie init project-root behavior', () => {
     expect(output).not.toContain('TypeError');
   });
 
-  it('reads a legacy notifie.json during the beta migration', async () => {
+  it('reads apiKey and baseUrl from notifie.json', async () => {
     writeFileSync(
       join(tmpDir, 'package.json'),
       JSON.stringify({ dependencies: { '@notifie-dev/web': '0.1.0' } }),
@@ -109,6 +109,42 @@ describe('notifie init project-root behavior', () => {
 
     expect(await run(['test-push'])).toBe(0);
     expect(output).toContain('Sent a test');
+  });
+
+  // The environment has to win so CI can point the same checkout at another
+  // server without editing a tracked file.
+  it('lets NOTIFIE_API_KEY and NOTIFIE_URL override notifie.json', async () => {
+    const envKey = `ntf_live_fedcba654321_${'b'.repeat(40)}`;
+    writeFileSync(
+      join(tmpDir, 'package.json'),
+      JSON.stringify({ dependencies: { '@notifie-dev/web': '0.1.0' } }),
+      'utf8',
+    );
+    writeFileSync(
+      join(tmpDir, 'notifie.json'),
+      JSON.stringify({ apiKey: VALID_KEY, baseUrl: 'https://from-file.example' }),
+      'utf8',
+    );
+    vi.stubEnv('NOTIFIE_API_KEY', envKey);
+    vi.stubEnv('NOTIFIE_URL', 'https://from-env.example');
+
+    const fetchMock = vi.fn(async (_url: unknown, _init?: unknown) => new Response(JSON.stringify({
+      received: 1,
+      inserted: 1,
+      duplicates: 0,
+    }), {
+      status: 202,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    expect(await run(['test-push'])).toBe(0);
+
+    const call = fetchMock.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(String(call?.[0])).toContain('https://from-env.example');
+    expect(JSON.stringify(call?.[1])).toContain(envKey);
+    expect(JSON.stringify(call?.[1])).not.toContain(VALID_KEY);
   });
 
   it('rejects typoed flags before writing configuration', async () => {

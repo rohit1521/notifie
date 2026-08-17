@@ -423,6 +423,55 @@ void main() {
     );
     expect(secondDrain, isEmpty);
   });
+
+  test('retries attaching the push provider after a failed prepare', () async {
+    final opened = StreamController<NotifieNotification>.broadcast();
+    addTearDown(opened.close);
+    final provider = _UnpreparedPushTokenProvider(opened: opened.stream);
+    final requests = <Request>[];
+    final client = _client(
+      store: _MemoryStore(),
+      pushProvider: provider,
+      handler: (request) {
+        requests.add(request);
+        return Future.value(Response('', 202));
+      },
+    );
+
+    await client.start();
+    await expectLater(client.attachPushProvider(), throwsA(isA<Exception>()));
+    expect(provider.prepareCalls, 1);
+
+    // Adding google-services.json later must not be permanently ignored.
+    provider.firebaseConfigured = true;
+    await client.attachPushProvider();
+    expect(provider.prepareCalls, 2);
+
+    opened.add(
+      const NotifieNotification(
+        data: {'gk_invocation_id': 'inv-after-retry'},
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    await client.flush();
+
+    final events = requests
+        .where((request) => request.method == 'POST')
+        .expand((request) => _events(request))
+        .toList();
+    expect(
+      events.map((event) => event['event']),
+      contains('notification_opened'),
+      reason: 'listeners must be attached by the successful retry',
+    );
+  });
+}
+
+List<Map<String, Object?>> _events(Request request) {
+  final body = _body(request);
+  final events = body['events'];
+  if (events is! List) return const [];
+  return events.cast<Map<String, Object?>>();
 }
 
 NotifieClient _client({
@@ -491,6 +540,31 @@ final class _FakePushTokenProvider extends PushTokenProvider {
 
   @override
   Stream<PushToken> get tokenRefreshes => _refreshes;
+}
+
+/// Mirrors an Android project without google-services.json: prepare() fails
+/// until Firebase is configured, then succeeds.
+final class _UnpreparedPushTokenProvider extends PushTokenProvider {
+  _UnpreparedPushTokenProvider({Stream<NotifieNotification>? opened})
+      : _opened = opened ?? const Stream.empty();
+
+  final Stream<NotifieNotification> _opened;
+  int prepareCalls = 0;
+  bool firebaseConfigured = false;
+
+  @override
+  Future<void> prepare() async {
+    prepareCalls += 1;
+    if (!firebaseConfigured) {
+      throw const NotifieException('No Firebase App has been created.');
+    }
+  }
+
+  @override
+  Future<PushToken?> enableNotifications() async => null;
+
+  @override
+  Stream<NotifieNotification> get openedNotifications => _opened;
 }
 
 final class _OrderedPushTokenProvider extends PushTokenProvider {

@@ -44,7 +44,6 @@ import { resolveGoogleServicesCheckpoint } from './firebase-setup.ts';
  */
 
 const CONFIG_FILE = 'notifie.json';
-const LEGACY_CONFIG_FILE = 'notifie.json';
 
 interface LoadedConfig {
   config: DoctorConfig;
@@ -52,14 +51,11 @@ interface LoadedConfig {
 }
 
 function loadConfig(cwd = process.cwd()): LoadedConfig {
-  const currentPath = resolve(cwd, CONFIG_FILE);
-  const legacyPath = resolve(cwd, LEGACY_CONFIG_FILE);
-  const path = existsSync(currentPath) ? currentPath : legacyPath;
-  const fileName = path === currentPath ? CONFIG_FILE : LEGACY_CONFIG_FILE;
+  const path = resolve(cwd, CONFIG_FILE);
 
   const fromEnv: DoctorConfig = {
-    apiKey: process.env.NOTIFIE_API_KEY ?? process.env.NOTIFIE_API_KEY,
-    baseUrl: process.env.NOTIFIE_URL ?? process.env.NOTIFIE_URL,
+    apiKey: process.env.NOTIFIE_API_KEY,
+    baseUrl: process.env.NOTIFIE_URL,
   };
 
   if (!existsSync(path)) return { config: fromEnv };
@@ -67,7 +63,7 @@ function loadConfig(cwd = process.cwd()): LoadedConfig {
   try {
     const parsed = JSON.parse(readFileSync(path, 'utf8')) as unknown;
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      return { config: fromEnv, error: `${fileName} must contain a JSON object.` };
+      return { config: fromEnv, error: `${CONFIG_FILE} must contain a JSON object.` };
     }
     const record = parsed as Record<string, unknown>;
     if (
@@ -76,7 +72,7 @@ function loadConfig(cwd = process.cwd()): LoadedConfig {
     ) {
       return {
         config: fromEnv,
-        error: `${fileName} apiKey and baseUrl must be strings.`,
+        error: `${CONFIG_FILE} apiKey and baseUrl must be strings.`,
       };
     }
     // Environment wins, so CI can override without editing a file.
@@ -87,7 +83,7 @@ function loadConfig(cwd = process.cwd()): LoadedConfig {
       },
     };
   } catch {
-    return { config: fromEnv, error: `${fileName} is not valid JSON.` };
+    return { config: fromEnv, error: `${CONFIG_FILE} is not valid JSON.` };
   }
 }
 
@@ -304,7 +300,7 @@ async function cmdDoctor(): Promise<number> {
       name: 'Project config',
       status: 'fail',
       message: loaded.error,
-      fix: 'Repair or delete notifie.json (or legacy notifie.json), then rerun `notifie init`.',
+      fix: 'Repair or delete notifie.json, then rerun `notifie init`.',
     });
   }
 
@@ -540,7 +536,7 @@ async function cmdTestPush(): Promise<number> {
   const loaded = loadConfig();
   if (loaded.error) {
     print(`\n  ✗ ${loaded.error}`);
-    print('    Repair or delete notifie.json (or legacy notifie.json), then rerun `notifie init`.\n');
+    print('    Repair or delete notifie.json, then rerun `notifie init`.\n');
     return 1;
   }
   const config = loaded.config;

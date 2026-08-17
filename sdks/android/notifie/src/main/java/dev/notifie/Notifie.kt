@@ -424,7 +424,19 @@ public object Notifie {
 
     private fun fetchAndRegisterToken(client: NotifieClient) {
         val callback = notificationCallback
-        FirebaseMessaging.getInstance().token
+        // FirebaseMessaging.getInstance() throws synchronously when the app has
+        // no google-services.json, so addOnFailureListener cannot see it. Left
+        // uncaught it crashes the host app, including from the permission
+        // result callback, instead of reporting a diagnosable enrollment state.
+        val messaging = try {
+            FirebaseMessaging.getInstance()
+        } catch (error: IllegalStateException) {
+            Log.e(logTag, "Remote push needs Firebase. Add google-services.json to this app.", error)
+            callback?.invoke(NotificationEnrollment.TOKEN_ERROR)
+            clearNotificationCallback(callback)
+            return
+        }
+        messaging.token
             .addOnSuccessListener { token ->
                 if (token.isBlank()) {
                     callback?.invoke(NotificationEnrollment.TOKEN_ERROR)

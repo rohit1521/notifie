@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0-beta.4
+
+### Fixed
+
+- `Notifie.initialize` no longer fails when Firebase is not configured. It
+  attached the push provider unconditionally, so on a project without
+  `google-services.json` the Firebase lookup threw, initialization unwound the
+  client, and the SDK tracked no events at all. Remote push is now optional at
+  startup: the failure is reported through `onError` and events and local
+  notifications keep working. An explicit `enableNotifications()` call still
+  throws.
+- A failed push attach no longer marks the provider as attached. The flag was
+  set before the work that could fail, so a retry after adding
+  `google-services.json` returned early and left the notification listeners
+  detached for the rest of the process.
+
 ## 0.1.0-beta.3
 
 ### Changed
