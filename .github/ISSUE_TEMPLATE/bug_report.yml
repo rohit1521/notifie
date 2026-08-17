@@ -1,0 +1,70 @@
+name: Bug report
+description: Something in an SDK, the CLI or the contracts behaves incorrectly.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never paste an APNs `.p8` key, a Firebase service account, a
+        `google-services.json` or a Notifie API key into this form.
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - Swift (CocoaPods)
+        - Android (Maven Central)
+        - Flutter (pub.dev)
+        - CLI
+        - Contracts
+        - React Native (source only)
+        - Server (source only)
+        - Web (source only)
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The exact version installed, not "latest".
+      placeholder: 0.1.0-beta.5
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Where did this run?
+      description: >-
+        A simulator cannot register for remote push or prove delivery, so this
+        decides whether the behaviour is a bug at all.
+      options:
+        - Physical device
+        - Simulator or emulator
+        - Not applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest code that shows the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Redact keys and tokens first.
+      render: text

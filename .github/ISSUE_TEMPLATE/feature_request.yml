@@ -1,0 +1,23 @@
+name: Feature request
+description: Propose a capability for an SDK, the CLI or the contracts.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you solving?
+      description: Describe the situation, not the implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like Notifie to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What are you doing instead today?

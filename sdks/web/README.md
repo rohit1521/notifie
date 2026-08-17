@@ -1,5 +1,9 @@
 # Notifie for Web
 
+> **Not published yet.** `@notifie-dev/web` is not on npm, so importing it from
+> a package manager will fail today. It builds and tests in this repository; use
+> it by reading the source or pinning a git checkout.
+
 The Web SDK owns anonymous browser identity and event delivery.
 
 ```ts

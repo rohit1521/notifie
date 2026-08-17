@@ -1,5 +1,13 @@
 # Notifie for React Native
 
+> **Not published yet.** `@notifie-dev/react-native` is not on npm, so the
+> install command below will fail today. It builds and tests in this repository;
+> use it by reading the source or pinning a git checkout. The released SDKs are
+> [Swift](../swift), [Android](../android) and [Flutter](../flutter).
+>
+> This SDK also does not yet schedule local notifications — it covers events,
+> identity and FCM token registration only.
+
 Notifie owns anonymous identity, user association, lifecycle events, durable
 event delivery, Firebase token refresh, notification attribution, and logout
 cleanup behind one React Native API.

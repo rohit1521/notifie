@@ -1,5 +1,10 @@
 # Notifie Server SDK
 
+> **Not published yet.** `@notifie-dev/server` is not on npm, so importing it
+> from a package manager will fail today. It builds and tests in this
+> repository; use it by reading the source or pinning a git checkout. Until it
+> ships, call the [HTTP API](../../docs-public/api) directly.
+
 One server client owns four operations: `identify`, `track`, `trigger`, and `notify`.
 
 ```ts

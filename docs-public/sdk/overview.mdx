@@ -5,19 +5,20 @@ description: "Choose the Notifie SDK that matches your application stack."
 
 | Platform | Events | Push registration | Identify API | Distribution |
 | --- | --- | --- | --- | --- |
-| Swift | Yes | APNs | Yes | CocoaPods / repository package |
-| Android | Yes | FCM | Yes | Maven Central / repository module |
-| Flutter | Yes | APNs / FCM | Yes | pub.dev / repository path package |
-| React Native | Yes | FCM | Not yet on main | Repository workspace package |
-| Server | Yes | No | Yes | Repository workspace package |
-| Web | Yes | No | Not yet | Repository workspace package |
+| Swift | Yes | APNs | Yes | CocoaPods |
+| Android | Yes | FCM | Yes | Maven Central |
+| Flutter | Yes | APNs / FCM | Yes | pub.dev |
+| React Native | Yes | FCM | Not yet on main | Source only — not published |
+| Server | Yes | No | Yes | Source only — not published |
+| Web | Yes | No | Not yet | Source only — not published |
 
 <Note>
-  The Swift SDK is published to CocoaPods as `Notifie 0.1.0-beta.2`, and the
-  Android SDK is on Maven Central as
-  `dev.notifie:notifie-android:0.1.0-beta.3`, and Flutter is on pub.dev as
-  `notifie_flutter 0.1.0-beta.3`. React Native, Server and Web remain
-  early-access packages distributed from the public Notifie repository until
+  Published today: `Notifie 0.1.0-beta.2` on CocoaPods,
+  `dev.notifie:notifie-android:0.1.0-beta.4` on Maven Central, and
+  `notifie_flutter 0.1.0-beta.5` on pub.dev.
+
+  React Native, Server and Web are **not on any registry**. Installing them by
+  name will fail; build them from a checkout of the public repository until
   their registry releases are available.
 </Note>
 
