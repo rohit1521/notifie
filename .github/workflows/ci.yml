@@ -56,6 +56,34 @@ jobs:
       - run: flutter test
         working-directory: sdks/flutter
 
+      # analyze and test never merge a manifest, so neither could see the
+      # defect that mattered most: this plugin and the Android SDK each declared
+      # an activity for the notification-open action, Android could not choose
+      # between them, and it asked the user to "Complete action using" one of two
+      # identical copies of their own app on every tap -- then crashed if they
+      # picked the native one. That only exists once Gradle merges two published
+      # artifacts, which is a layer no unit test reaches.
+      - name: Build the example app
+        run: flutter build apk --debug
+        working-directory: examples/flutter
+      - name: Exactly one activity may handle a notification tap
+        working-directory: examples/flutter
+        run: |
+          found=0
+          for manifest in $(find build/app/intermediates -path '*merged_manifest*' -name AndroidManifest.xml); do
+            found=1
+            count=$(grep -c 'android:name="dev.notifie.NOTIFICATION_OPEN"' "$manifest" || true)
+            echo "$count handler(s) in $manifest"
+            if [ "$count" != "1" ]; then
+              echo "::error::$manifest declares $count handlers for dev.notifie.NOTIFICATION_OPEN; exactly 1 is required."
+              exit 1
+            fi
+          done
+          if [ "$found" = "0" ]; then
+            echo "::error::No merged manifest found. The check cannot pass vacuously."
+            exit 1
+          fi
+
   # The Android SDK owns notification display, tap handling and token
   # registration. Its unit tests were previously run only by hand, which is how
   # a remote push whose tap did nothing reached a release.
