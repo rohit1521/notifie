@@ -161,6 +161,41 @@ actor EventQueue {
         }
     }
 
+    /// Whether a revocation can be considered settled.
+    ///
+    /// Deliberately a different judgement from an event batch. Dropping a
+    /// revocation leaves a signed-out user's device subscribed to their own
+    /// notifications, so a status that merely means "the server never evaluated
+    /// this" has to be retried even though the same status makes an event batch
+    /// permanently unsendable.
+    private enum RevocationOutcome {
+        /// The token is gone, or was never there. Either way the goal is met.
+        case settled
+        /// The server will never accept this payload, so retrying is pointless.
+        case unacceptable
+        /// Not evaluated, or transient. The token may still be subscribed.
+        case retry
+    }
+
+    private func classifyRevocation(_ statusCode: Int) -> RevocationOutcome {
+        switch statusCode {
+        case 200...299:
+            return .settled
+        // Already absent server-side, which is exactly the state the revocation
+        // was trying to reach. Treating it as a failure retried it forever and
+        // blocked every later registration behind it.
+        case 404, 410:
+            return .settled
+        case 400, 413, 422:
+            return .unacceptable
+        // 401 and 403 land here: the request was never evaluated, and a rotated
+        // key is the ordinary cause and a temporary one. Discarding on auth
+        // failure would strand a signed-out user as a subscriber.
+        default:
+            return .retry
+        }
+    }
+
     private func send(_ events: [NotifieEvent]) async -> SendOutcome {
         do {
             let request = try buildEventsRequest(events)
@@ -346,18 +381,17 @@ actor EventQueue {
                 request.httpBody = try Storage.encoder.encode(PushTokenRevocationBody(token: token))
                 let (_, response) = try await transport.send(request: request)
 
-                switch classify(response.statusCode) {
-                case .success:
+                switch classifyRevocation(response.statusCode) {
+                case .settled:
                     storage.completePushTokenRevocation(token)
-                case .permanent:
-                    // The server will never accept this token — most often a 404
-                    // because it is already gone. Discarding it is what stops one
-                    // dead token from blocking every future registration.
-                    logger.debug(
-                        "Discarding unacceptable revocation: HTTP \(response.statusCode)"
+                case .unacceptable:
+                    // The server will never accept this token's shape, so one
+                    // malformed value must not block every future registration.
+                    logger.error(
+                        "Discarding unusable revocation: HTTP \(response.statusCode)"
                     )
                     storage.completePushTokenRevocation(token)
-                case .retryable:
+                case .retry:
                     logger.error("Push token revocation failed: HTTP \(response.statusCode)")
                     return false
                 }

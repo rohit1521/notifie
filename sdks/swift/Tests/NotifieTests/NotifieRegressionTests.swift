@@ -370,6 +370,50 @@ final class NotifieRegressionTests: XCTestCase {
         XCTAssertEqual(storage.pendingPushTokenRevocations(), ["live-token"])
     }
 
+    /// Confirmed against the live API: a rotated key answers a revocation with
+    /// 401. That is the server declining to look at the request, not confirming
+    /// the token is gone, so discarding it would leave a signed-out user's
+    /// device subscribed to their own notifications.
+    func testAuthFailureDoesNotDiscardARevocation() async {
+        let storage = makeStorage()
+        storage.enqueuePushTokenRevocation("signed-out-token")
+
+        let transport = RoutingTransport { _ in 401 }
+        let queue = EventQueue(
+            config: makeConfig(),
+            transport: transport,
+            storage: storage,
+            logger: NotifieLogger(level: .silent)
+        )
+
+        _ = await queue.flushPushTokenLifecycle()
+
+        XCTAssertEqual(
+            storage.pendingPushTokenRevocations(),
+            ["signed-out-token"],
+            "an unevaluated revocation must be kept, or a signed-out user stays subscribed"
+        )
+    }
+
+    /// Also confirmed live: an empty token is a 400. The server will never
+    /// accept it, so it must be dropped rather than retried forever.
+    func testUnusableRevocationIsDiscardedRatherThanRetriedForever() async {
+        let storage = makeStorage()
+        storage.enqueuePushTokenRevocation("malformed-token")
+
+        let transport = RoutingTransport { _ in 400 }
+        let queue = EventQueue(
+            config: makeConfig(),
+            transport: transport,
+            storage: storage,
+            logger: NotifieLogger(level: .silent)
+        )
+
+        _ = await queue.flushPushTokenLifecycle()
+
+        XCTAssertTrue(storage.pendingPushTokenRevocations().isEmpty)
+    }
+
     // MARK: - identify must survive being made offline
 
     /// identify was a single fire-and-forget attempt, so calling it without a
