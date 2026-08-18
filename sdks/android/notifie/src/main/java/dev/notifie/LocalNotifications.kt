@@ -305,6 +305,79 @@ internal object LocalNotificationStore {
     }
 }
 
+/**
+ * Allocates the integers Android uses to identify a scheduled notification.
+ *
+ * A caller's identifier is a string, but a `PendingIntent` request code is an
+ * `Int`, so the two must be mapped. Hashing the string looked like the obvious
+ * way and is genuinely stable — `String.hashCode` is specified by the language,
+ * so it survives a restart — but it is not unique. Two identifiers that hash
+ * alike share one `PendingIntent`: scheduling the second silently replaced the
+ * first's alarm, cancelling either cancelled both, and the store went on
+ * listing two reminders when only one could ever fire.
+ *
+ * Codes are therefore handed out from a counter and persisted against the
+ * identifier that owns them. That keeps the stability cancellation depends on
+ * while making a collision impossible rather than merely unlikely.
+ */
+internal object LocalNotificationIds {
+    private const val PREFERENCES = "notifie.local_notification_ids"
+
+    /**
+     * Namespaced so it can never be mistaken for a caller's identifier:
+     * `LocalNotificationStore.validate` rejects any id in this namespace.
+     */
+    private const val NEXT_CODE_KEY = "notifie.local.next_request_code"
+
+    /** Zero means "no code allocated", so allocation starts above it. */
+    private const val FIRST_CODE = 1
+
+    private val lock = Any()
+
+    /** The code owned by [id], allocating one the first time it is asked for. */
+    fun requestCode(context: Context, id: String): Int = synchronized(lock) {
+        val preferences = preferences(context)
+        val existing = preferences.getInt(id, 0)
+        if (existing != 0) {
+            existing
+        } else {
+            val code = preferences.getInt(NEXT_CODE_KEY, FIRST_CODE)
+                .let { if (it == 0) FIRST_CODE else it }
+            // Committed rather than applied: this mapping is the only handle on
+            // the alarm it identifies, so losing it to a crash would strand a
+            // reminder that keeps firing and can no longer be cancelled.
+            preferences.edit()
+                .putInt(id, code)
+                .putInt(NEXT_CODE_KEY, code + 1)
+                .commit()
+            code
+        }
+    }
+
+    /** The code owned by [id], or null when none was ever allocated. */
+    fun peek(context: Context, id: String): Int? = synchronized(lock) {
+        preferences(context).getInt(id, 0).takeIf { it != 0 }
+    }
+
+    fun release(context: Context, id: String) {
+        synchronized(lock) {
+            preferences(context).edit().remove(id).commit()
+        }
+    }
+
+    /**
+     * The derivation used before codes were allocated.
+     *
+     * Kept only so an alarm armed by an earlier version can still be found and
+     * cleared after an upgrade. Nothing is ever scheduled with it again.
+     */
+    fun legacyRequestCode(id: String): Int =
+        (LocalNotificationStore.ID_NAMESPACE + id).hashCode()
+
+    private fun preferences(context: Context) =
+        context.applicationContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+}
+
 internal object LocalNotificationScheduler {
 
     fun schedule(
@@ -339,6 +412,7 @@ internal object LocalNotificationScheduler {
             )
 
         val exactGranted = notification.android.exact && canScheduleExact(manager)
+        clearLegacyAlarm(context, notification.id, manager)
         val pendingIntent = firePendingIntent(context, notification.id)
 
         return try {
@@ -373,17 +447,49 @@ internal object LocalNotificationScheduler {
 
     fun cancel(context: Context, id: String) {
         val manager = context.getSystemService(AlarmManager::class.java)
-        manager?.cancel(firePendingIntent(context, id))
-        LocalNotificationStore.remove(context, id)
+        if (manager != null) {
+            LocalNotificationIds.peek(context, id)
+                ?.let { armedAlarm(context, id, it) }
+                ?.let { alarm ->
+                    manager.cancel(alarm)
+                    alarm.cancel()
+                }
+            clearLegacyAlarm(context, id, manager)
+        }
+        forget(context, id)
     }
 
+    /**
+     * The reminders that will actually fire.
+     *
+     * The store records what the caller asked for; the alarm is only the
+     * mechanism. Reporting the store alone described reminders the operating
+     * system had no alarm for and would never deliver, so each entry is
+     * reconciled against the alarm that is supposed to back it.
+     */
     fun pending(
         context: Context,
         nowMillis: Long = System.currentTimeMillis(),
     ): List<PendingLocalNotification> =
         LocalNotificationStore.all(context).mapNotNull { notification ->
-            LocalNotificationStore.nextOccurrence(notification.schedule, nowMillis)
-                ?.let { PendingLocalNotification(notification.id, it) }
+            val triggerAt =
+                LocalNotificationStore.nextOccurrence(notification.schedule, nowMillis)
+            if (triggerAt == null) {
+                // A one-shot whose moment has passed can never fire. Reporting
+                // it would promise a delivery that cannot happen, and keeping
+                // it would grow storage without bound.
+                forget(context, notification.id)
+                null
+            } else {
+                // A missing alarm means the intent outlived its mechanism.
+                // Re-arming is what makes the answer true; dropping the entry
+                // instead would silently discard a reminder the caller still
+                // expects.
+                if (!hasArmedAlarm(context, notification.id)) {
+                    arm(context, notification, triggerAt)
+                }
+                PendingLocalNotification(notification.id, triggerAt)
+            }
         }
 
     /**
@@ -399,7 +505,7 @@ internal object LocalNotificationScheduler {
             if (triggerAt == null) {
                 // A one-shot that elapsed while the device was off can never
                 // fire; dropping it keeps storage from growing without bound.
-                LocalNotificationStore.remove(context, notification.id)
+                forget(context, notification.id)
             } else {
                 arm(context, notification, triggerAt)
             }
@@ -414,25 +520,64 @@ internal object LocalNotificationScheduler {
         }
 
     /**
-     * A stable request code derived from the caller's id.
+     * A stable request code for [id], allocated on first use.
      *
-     * `String.hashCode` is specified by the Java language, so the same id yields
-     * the same code across processes and devices. That stability is what makes
-     * cancellation and replacement work after a restart.
+     * Stability is what makes cancellation and replacement work after a
+     * restart; uniqueness is what stops one reminder clobbering another.
      */
-    internal fun requestCode(id: String): Int =
-        (LocalNotificationStore.ID_NAMESPACE + id).hashCode()
+    internal fun requestCode(context: Context, id: String): Int =
+        LocalNotificationIds.requestCode(context, id)
 
-    private fun firePendingIntent(context: Context, id: String): PendingIntent {
-        val intent = Intent(context.applicationContext, LocalNotificationAlarmReceiver::class.java)
+    private fun fireIntent(context: Context, id: String): Intent =
+        Intent(context.applicationContext, LocalNotificationAlarmReceiver::class.java)
             .setAction(LocalNotificationAlarmReceiver.ACTION_FIRE)
             .putExtra(LocalNotificationAlarmReceiver.EXTRA_ID, id)
-        return PendingIntent.getBroadcast(
+
+    private fun firePendingIntent(context: Context, id: String): PendingIntent =
+        PendingIntent.getBroadcast(
             context.applicationContext,
-            requestCode(id),
-            intent,
+            requestCode(context, id),
+            fireIntent(context, id),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+
+    /**
+     * The alarm already armed under [code], or null when there is none.
+     *
+     * `FLAG_NO_CREATE` is what makes this a question rather than an action: it
+     * reports the operating system's actual state instead of creating the very
+     * thing it was asked about.
+     */
+    private fun armedAlarm(context: Context, id: String, code: Int): PendingIntent? =
+        PendingIntent.getBroadcast(
+            context.applicationContext,
+            code,
+            fireIntent(context, id),
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+    /** True while the operating system still holds an alarm for [id]. */
+    private fun hasArmedAlarm(context: Context, id: String): Boolean {
+        val allocated = LocalNotificationIds.peek(context, id)
+        if (allocated != null && armedAlarm(context, id, allocated) != null) return true
+        return armedAlarm(context, id, LocalNotificationIds.legacyRequestCode(id)) != null
+    }
+
+    /**
+     * Clears an alarm armed by a version that derived its request code from a
+     * hash. Without this an upgrade would leave that alarm running invisibly
+     * beside the newly allocated one, and the reminder would fire twice.
+     */
+    private fun clearLegacyAlarm(context: Context, id: String, manager: AlarmManager) {
+        val legacy = armedAlarm(context, id, LocalNotificationIds.legacyRequestCode(id)) ?: return
+        manager.cancel(legacy)
+        legacy.cancel()
+    }
+
+    /** Drops every trace of [id]: the definition and the code it owned. */
+    private fun forget(context: Context, id: String) {
+        LocalNotificationStore.remove(context, id)
+        LocalNotificationIds.release(context, id)
     }
 }
 

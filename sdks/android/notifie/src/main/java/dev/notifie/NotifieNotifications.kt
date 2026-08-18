@@ -83,7 +83,12 @@ internal object NotifieNotifications {
         }
 
         context.getSystemService(NotificationManager::class.java)
-            .notify(invocationId.hashCode().absoluteValue, builder.build())
+            // The same integer identifies the tap intent above, so a redelivery
+            // of one invocation replaces its notification rather than stacking a
+            // duplicate. Deliberately not `absoluteValue`: that is a no-op for
+            // Int.MIN_VALUE, which stays negative and so never made the
+            // guarantee it appeared to, while a negative id is perfectly legal.
+            .notify(invocationId.hashCode(), builder.build())
     }
 
     internal fun resolveSmallIcon(applicationInfo: ApplicationInfo): Int {

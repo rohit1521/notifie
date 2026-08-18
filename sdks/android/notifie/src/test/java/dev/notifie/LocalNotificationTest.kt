@@ -2,7 +2,9 @@ package dev.notifie
 
 import dev.notifie.Notifie
 
+import android.app.AlarmManager
 import android.app.Application
+import android.content.Context
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -12,6 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.util.Calendar
 import java.util.TimeZone
@@ -171,13 +174,95 @@ class LocalNotificationTest {
         // Cancellation after a restart depends on regenerating the same code,
         // so this must not use identity or a random value.
         assertEquals(
-            LocalNotificationScheduler.requestCode("streak"),
-            LocalNotificationScheduler.requestCode("streak"),
+            LocalNotificationScheduler.requestCode(application, "streak"),
+            LocalNotificationScheduler.requestCode(application, "streak"),
         )
         assertTrue(
-            LocalNotificationScheduler.requestCode("a") !=
-                LocalNotificationScheduler.requestCode("b"),
+            LocalNotificationScheduler.requestCode(application, "a") !=
+                LocalNotificationScheduler.requestCode(application, "b"),
         )
+    }
+
+    @Test
+    fun `request codes never collide, even for ids that hash alike`() {
+        // These two hash to the same 32-bit value once namespaced, which is how
+        // one reminder used to silently take over another's alarm.
+        val first = "reminder-800903"
+        val second = "reminder-2043030"
+        assertEquals(
+            "precondition: these ids must still hash alike",
+            (LocalNotificationStore.ID_NAMESPACE + first).hashCode(),
+            (LocalNotificationStore.ID_NAMESPACE + second).hashCode(),
+        )
+
+        assertTrue(
+            LocalNotificationScheduler.requestCode(application, first) !=
+                LocalNotificationScheduler.requestCode(application, second),
+        )
+    }
+
+    @Test
+    fun `colliding reminders keep separate alarms and cancel independently`() {
+        val first = "reminder-800903"
+        val second = "reminder-2043030"
+
+        Notifie.scheduleAfter(
+            application, id = first,
+            title = "Take medication", body = "Morning dose", seconds = 600,
+        )
+        Notifie.scheduleAfter(
+            application, id = second,
+            title = "Team standup", body = "Daily sync", seconds = 1200,
+        )
+
+        val alarmManager = application.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        assertEquals(
+            "each reminder must own an alarm",
+            2,
+            shadowOf(alarmManager).scheduledAlarms.size,
+        )
+
+        Notifie.cancel(application, first)
+
+        assertEquals(
+            "cancelling one reminder must leave the other armed",
+            1,
+            shadowOf(alarmManager).scheduledAlarms.size,
+        )
+        assertEquals(listOf(second), Notifie.pending(application).map { it.id })
+    }
+
+    @Test
+    fun `pending re-arms a reminder whose alarm went missing`() {
+        Notifie.scheduleAfter(
+            application, id = "streak",
+            title = "Keep it up", body = "Practise today", seconds = 600,
+        )
+
+        val alarmManager = application.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        shadowOf(alarmManager).scheduledAlarms.clear()
+
+        // Reporting a reminder the operating system has no alarm for would be a
+        // promise the SDK cannot keep, so reading reconciles the two.
+        assertEquals(listOf("streak"), Notifie.pending(application).map { it.id })
+        assertEquals(1, shadowOf(alarmManager).scheduledAlarms.size)
+    }
+
+    @Test
+    fun `pending forgets a one-shot whose moment has passed`() {
+        // Only an absolute schedule can elapse: `After` is measured from now,
+        // so it always resolves to a future instant.
+        val fireAt = System.currentTimeMillis() + 60_000
+        LocalNotificationScheduler.schedule(
+            application,
+            reminder(id = "elapsed", schedule = LocalSchedule.At(fireAt)),
+        )
+        assertNotNull(LocalNotificationStore.load(application, "elapsed"))
+
+        assertTrue(
+            LocalNotificationScheduler.pending(application, fireAt + 1_000).isEmpty(),
+        )
+        assertNull(LocalNotificationStore.load(application, "elapsed"))
     }
 
     // MARK: - Reboot
