@@ -301,7 +301,7 @@ packages:
       path: "../../sdks/flutter"
       relative: true
     source: path
-    version: "0.1.0-beta.6"
+    version: "0.1.0-beta.7"
   objective_c:
     dependency: transitive
     description:

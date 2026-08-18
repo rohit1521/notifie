@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name             = 'Notifie'
-  spec.version          = '0.1.0-beta.2'
+  spec.version          = '0.1.0-beta.3'
   spec.summary          = 'Notifie Device SDK for iOS and macOS.'
   spec.description      = <<~DESC
     Local notifications, push token registration, lifecycle events and durable

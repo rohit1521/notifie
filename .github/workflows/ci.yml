@@ -34,13 +34,48 @@ jobs:
   swift:
     name: Swift SDK
     runs-on: macos-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - run: xcrun swift build
         working-directory: sdks/swift
       - run: xcrun swift test
         working-directory: sdks/swift
+
+      # The two steps above target the host, which is macOS. Every
+      # `#if canImport(UIKit)` path -- the lifecycle observers, APNs enrolment
+      # and device context -- is therefore compiled out, so nothing so far
+      # would notice if the iOS half of an iOS SDK stopped compiling. Only an
+      # explicit iOS destination builds it.
+      - name: Build for iOS
+        run: |
+          xcodebuild -scheme Notifie \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/notifie-ios" \
+            build
+        working-directory: sdks/swift
+
+      # The pod is what consumers actually install, and its metadata can be
+      # wrong -- a bad file pattern, a deployment target below an API it uses --
+      # in ways no swift build reveals.
+      - name: Lint the podspec
+        run: pod lib lint Notifie.podspec --allow-warnings --fail-fast
+
+  # flutter analyze and flutter test never compile the plugin's Swift half,
+  # which is how a bridge that silently discarded every local notification tap
+  # on iOS reached a release. Building the example is what compiles it.
+  flutter-ios:
+    name: Flutter SDK (iOS)
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Build the example app for iOS
+        run: flutter build ios --no-codesign --debug
+        working-directory: examples/flutter
 
   flutter:
     name: Flutter SDK

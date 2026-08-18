@@ -7,6 +7,7 @@ final class Storage: @unchecked Sendable {
     private let defaults: UserDefaults
     private let queueFileURL: URL
     private let revocationLock = NSLock()
+    private let identityLock = NSLock()
     private let anonymousIdKey = "gk_anonymous_id"
 
     static let isoFormatter: ISO8601DateFormatter = {
@@ -91,6 +92,50 @@ final class Storage: @unchecked Sendable {
 
     func clearQueue() {
         try? FileManager.default.removeItem(at: queueFileURL)
+    }
+
+    // MARK: - Pending identify
+
+    private let pendingIdentifyKey = "gk_pending_identify"
+
+    /**
+     Holds an identify that has not been accepted yet.
+
+     Identify is not requeued through the event queue because it is not an
+     event: the server keys user properties by external id and applies them
+     last-write-wins, so replaying the newest call is correct where replaying a
+     backlog would not be. Persisting it means an identify made on a plane is
+     still delivered on landing rather than lost with the process.
+     */
+    func pendingIdentify() -> IdentifyBody? {
+        identityLock.withLock {
+            guard let data = defaults.data(forKey: pendingIdentifyKey) else { return nil }
+            return try? Storage.decoder.decode(IdentifyBody.self, from: data)
+        }
+    }
+
+    func savePendingIdentify(_ body: IdentifyBody) {
+        identityLock.withLock {
+            guard let data = try? Storage.encoder.encode(body) else { return }
+            defaults.set(data, forKey: pendingIdentifyKey)
+        }
+    }
+
+    /// Clears only when the stored value is still the one just delivered, so a
+    /// newer identify queued mid-flight is not discarded by an older success.
+    func completePendingIdentify(_ body: IdentifyBody) {
+        identityLock.withLock {
+            guard let data = defaults.data(forKey: pendingIdentifyKey),
+                  let current = try? Storage.decoder.decode(IdentifyBody.self, from: data),
+                  current == body else { return }
+            defaults.removeObject(forKey: pendingIdentifyKey)
+        }
+    }
+
+    func clearPendingIdentify() {
+        identityLock.withLock {
+            defaults.removeObject(forKey: pendingIdentifyKey)
+        }
     }
 
     // MARK: - Push token
