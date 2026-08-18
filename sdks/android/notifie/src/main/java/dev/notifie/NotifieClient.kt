@@ -166,7 +166,13 @@ internal class NotifieClient(
                 .commit()
         }
         executor.execute {
-            val registered = flushPushTokenRegistration()
+            // Gated on revocations for the same reason flushAll is. A queued
+            // DELETE names a token this device may be registering again --
+            // FCM hands back the same token after a logout -- so running the
+            // registration first let the later revocation delete the live
+            // registration, leaving the device silently unreachable while the
+            // client believed push was active.
+            val registered = flushRevocations() && flushPushTokenRegistration()
             onResult?.invoke(registered)
         }
     }
@@ -294,10 +300,37 @@ internal class NotifieClient(
         writeRevocations(pending)
     }
 
+    /**
+     * Whether a revocation can be considered settled.
+     *
+     * Deliberately a different judgement from an event batch. Dropping a
+     * revocation leaves a signed-out user's device subscribed to their own
+     * notifications, so a status that only means "the server never evaluated
+     * this" has to be retried even though the same status makes an event batch
+     * permanently unsendable.
+     */
+    private enum class RevocationOutcome { SETTLED, UNACCEPTABLE, RETRY }
+
+    private fun classifyRevocation(status: Int): RevocationOutcome = when {
+        status in 200..299 -> RevocationOutcome.SETTLED
+        // Already absent server-side, which is exactly the state the revocation
+        // was trying to reach. Treating it as a failure retried it forever and
+        // blocked every later registration behind this gate.
+        status == 404 || status == 410 -> RevocationOutcome.SETTLED
+        // The payload will never be accepted, so retrying is pointless and one
+        // malformed value would stall every revocation behind it.
+        status == 400 || status == 413 || status == 422 -> RevocationOutcome.UNACCEPTABLE
+        // 401 and 403 land here, as does a transport failure (status 0): the
+        // request was never evaluated and the token may still be subscribed. A
+        // rotated key is the ordinary cause of 401 and is temporary, so
+        // discarding on it would strand a signed-out user as a subscriber.
+        else -> RevocationOutcome.RETRY
+    }
+
     private fun flushRevocations(): Boolean {
         for (token in readRevocations()) {
             val result = send("DELETE", "push-tokens", JSONObject().put("token", token))
-            if (!result.delivered) return false
+            if (classifyRevocation(result.status) == RevocationOutcome.RETRY) return false
             writeRevocations(readRevocations().filter { it != token })
         }
         return true

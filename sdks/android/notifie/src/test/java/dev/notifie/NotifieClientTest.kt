@@ -373,6 +373,96 @@ class NotifieClientTest {
         )
     }
 
+    @Test
+    fun aDelayedRevocationNeverDeletesTheTokenTheDeviceIsUsing() {
+        // FCM hands back the same token after a logout, so re-registering it
+        // while a DELETE is still queued used to revoke the live registration.
+        val transport = RevocationTransport(pendingDeleteStatuses = listOf(503))
+        val preferences = application.getSharedPreferences("notifie", Context.MODE_PRIVATE)
+        preferences.edit().putString("push_token", "fcm-token-T").commit()
+        val client = client(transport)
+        client.awaitIdle()
+
+        client.reset()
+        client.awaitIdle()
+        assertEquals(listOf("fcm-token-T"), client.pendingRevocations())
+
+        client.registerPushToken("fcm-token-T")
+        client.awaitIdle()
+
+        val forToken = transport.pushTokenCalls()
+            .filter { JSONObject(it.body).optString("token") == "fcm-token-T" }
+        assertEquals(
+            "the live token must end registered, not revoked",
+            "POST",
+            forToken.last().method,
+        )
+        assertTrue(client.pendingRevocations().isEmpty())
+    }
+
+    @Test
+    fun aTokenTheServerNoLongerKnowsSettlesTheRevocation() {
+        // 404 and 410 mean the token is already gone, which is the state the
+        // revocation wanted. Retrying them stalled every later registration.
+        for (status in listOf(404, 410)) {
+            application.getSharedPreferences("notifie", Context.MODE_PRIVATE)
+                .edit().clear().commit()
+
+            val transport = RevocationTransport(pendingDeleteStatuses = listOf(status))
+            val client = client(transport)
+            client.awaitIdle()
+            client.registerPushToken("gone-$status")
+            client.awaitIdle()
+
+            client.reset()
+            client.awaitIdle()
+            assertTrue(
+                "HTTP $status must settle the revocation",
+                client.pendingRevocations().isEmpty(),
+            )
+
+            client.registerPushToken("replacement-$status")
+            client.awaitIdle()
+            assertTrue(
+                "registration must not stall behind a settled revocation",
+                transport.pushTokenCalls().any {
+                    it.method == "POST" &&
+                        JSONObject(it.body).optString("token") == "replacement-$status"
+                },
+            )
+        }
+    }
+
+    @Test
+    fun anUnevaluatedRevocationIsKeptRatherThanDiscarded() {
+        // A rotated key answers 401. Discarding on it would leave a signed-out
+        // user's device subscribed to their own notifications.
+        val preferences = application.getSharedPreferences("notifie", Context.MODE_PRIVATE)
+        preferences.edit().putString("push_token", "still-live").commit()
+        val transport = RevocationTransport(pendingDeleteStatuses = listOf(401))
+        val client = client(transport)
+        client.awaitIdle()
+
+        client.reset()
+        client.awaitIdle()
+
+        assertEquals(listOf("still-live"), client.pendingRevocations())
+    }
+
+    @Test
+    fun anUnacceptableRevocationIsDiscardedRatherThanRetriedForever() {
+        val preferences = application.getSharedPreferences("notifie", Context.MODE_PRIVATE)
+        preferences.edit().putString("push_token", "malformed").commit()
+        val transport = RevocationTransport(pendingDeleteStatuses = listOf(400))
+        val client = client(transport)
+        client.awaitIdle()
+
+        client.reset()
+        client.awaitIdle()
+
+        assertTrue(client.pendingRevocations().isEmpty())
+    }
+
     private fun client(
         transport: NotifieTransport,
         batchSize: Int = 20,
@@ -423,6 +513,33 @@ private class FakeTransport(
         calls
             .filter { it.method == "POST" && it.url.endsWith("/push-tokens") }
             .map { JSONObject(it.body) }
+    }
+
+    fun pushTokenCalls(): List<TransportCall> = synchronized(calls) {
+        calls.filter { it.url.endsWith("/push-tokens") }
+    }
+}
+
+/**
+ * Answers DELETE from a scripted list and everything else with 200.
+ *
+ * Routing on the method rather than on call order keeps a revocation test
+ * independent of how many registrations or flushes happen around it.
+ */
+private class RevocationTransport(
+    pendingDeleteStatuses: List<Int> = emptyList(),
+    private val settledDeleteStatus: Int = 200,
+) : NotifieTransport {
+    val calls = CopyOnWriteArrayList<TransportCall>()
+    private val scripted = ArrayDeque(pendingDeleteStatuses)
+
+    override fun send(method: String, url: String, apiKey: String, body: String): HttpResult {
+        calls += TransportCall(method, url, body)
+        if (method != "DELETE") return HttpResult(200)
+        val status = synchronized(scripted) {
+            if (scripted.isEmpty()) settledDeleteStatus else scripted.removeFirst()
+        }
+        return HttpResult(status)
     }
 
     fun pushTokenCalls(): List<TransportCall> = synchronized(calls) {
