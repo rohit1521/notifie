@@ -50,6 +50,13 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 | [CLI](packages/cli) | Project configuration and integration diagnostics | npm | `@notifie-dev/cli` | `0.1.0-beta.2` |
 | [Contracts](packages/contracts) | Event, identity, push token and notification wire types | npm | `@notifie-dev/contracts` | `0.1.0-beta.1` |
 
+## Known issues in published versions
+
+These are fixed in this repository but not yet on the registry.
+
+- **Android `0.1.0-beta.4`** — until `0.1.0-beta.5` is published, tapping a notification whose deep link the app does not declare crashes the app. Flutter apps are unaffected — the plugin handles the tap itself.
+- **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing, so `LocalNotification` and the schedule types the SDK guides reference will not resolve.
+
 ## Source available, not yet published
 
 These build and test in this repository but are **not on npm**. Installing them
