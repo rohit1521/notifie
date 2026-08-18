@@ -196,6 +196,9 @@ public final class Notifie: @unchecked Sendable {
         // setting properties sees them delivered.
         await shared.pendingIdentify?.value
         await shared.currentQueue?.flush()
+        // Retries an identify an earlier attempt could not deliver, so an
+        // explicit flush recovers it rather than waiting for the timer.
+        await shared.currentQueue?.flushPendingIdentify()
     }
 
     /// Clears the identity and any queued events. Call on logout so the next
@@ -212,6 +215,7 @@ public final class Notifie: @unchecked Sendable {
         await pendingReset?.value
         await pendingIdentify?.value
         await currentQueue?.flush()
+        await currentQueue?.flushPendingIdentify()
     }
 
     func resetForTesting() {
@@ -428,6 +432,8 @@ public final class Notifie: @unchecked Sendable {
             _identifyChain?.cancel()
             _identifyChain = nil
             storage.clearPendingPushTokenRegistration()
+            // The previous user's identify must not be replayed after logout.
+            storage.clearPendingIdentify()
             storage.clearAnonymousId()
             storage.clearPushToken()
 

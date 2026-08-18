@@ -47,7 +47,10 @@ actor EventQueue {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
                 _ = await self?.flushPushTokenLifecycle()
+                // Events first: the server merges an anonymous history into the
+                // external user on identify, so a backlog must land before it.
                 await self?.flush()
+                await self?.flushPendingIdentify()
             }
         }
     }
@@ -127,26 +130,54 @@ actor EventQueue {
         case retryable
     }
 
+    /// How the SDK reacts to a response status.
+    ///
+    /// Shared by events, identify and revocations deliberately. When each
+    /// endpoint classified statuses for itself they disagreed: a 404 was fatal
+    /// for a batch of events but retried forever for a revocation, which is
+    /// what let one dead token block every later push registration.
+    private enum ResponseClass {
+        case success
+        /// The server will never accept this payload. Retrying cannot help, and
+        /// keeping it queued blocks everything behind it.
+        case permanent
+        /// Transient. The identical request may succeed later.
+        case retryable
+    }
+
+    private func classify(_ statusCode: Int) -> ResponseClass {
+        switch statusCode {
+        case 200...299:
+            return .success
+        // 408 and 425 mean "ask again", not "never". They previously fell into
+        // the default branch and were dropped as permanent, losing events the
+        // server SDK would have retried.
+        case 408, 425, 429:
+            return .retryable
+        case 500...599:
+            return .retryable
+        default:
+            return .permanent
+        }
+    }
+
     private func send(_ events: [NotifieEvent]) async -> SendOutcome {
         do {
             let request = try buildEventsRequest(events)
             let (_, response) = try await transport.send(request: request)
 
-            switch response.statusCode {
-            case 200...299:
+            switch classify(response.statusCode) {
+            case .success:
                 logger.debug("Flushed \(events.count) event(s)")
                 return .delivered
-            case 400, 401, 403, 413:
+            case .permanent:
                 // Retrying cannot help, and leaving the batch queued would block
                 // every later event behind it forever.
                 logger.error("Dropping \(events.count) event(s): HTTP \(response.statusCode)")
                 return .permanentlyRejected
-            case 429, 500...599:
+            case .retryable:
                 logger.error("HTTP \(response.statusCode); will retry with backoff")
                 return .retryable
-            default:
-                logger.error("Unexpected HTTP \(response.statusCode); dropping batch")
-                return .permanentlyRejected
             }
         } catch {
             logger.error("Network error: \(error)")
@@ -210,14 +241,39 @@ actor EventQueue {
 
     /// Routed through the queue's transport so a custom or mock transport
     /// applies to identify calls too, not just events.
+    ///
+    /// Persists before attempting delivery: a one-shot attempt lost the
+    /// identity permanently whenever the device happened to be offline.
     func sendIdentify(_ body: IdentifyBody) async {
+        storage.savePendingIdentify(body)
+        await deliverPendingIdentify()
+    }
+
+    /// Replays an identify an earlier attempt could not deliver. Driven by the
+    /// same timer as the event flush, so recovery needs no extra caller.
+    func flushPendingIdentify() async {
+        guard storage.pendingIdentify() != nil else { return }
+        await deliverPendingIdentify()
+    }
+
+    private func deliverPendingIdentify() async {
+        guard let body = storage.pendingIdentify() else { return }
+
         do {
             var request = authorizedRequest("identify")
             request.httpBody = try Storage.encoder.encode(body)
             let (_, response) = try await transport.send(request: request)
 
-            if !(200...299).contains(response.statusCode) {
-                logger.error("Identify failed: HTTP \(response.statusCode)")
+            switch classify(response.statusCode) {
+            case .success:
+                storage.completePendingIdentify(body)
+            case .permanent:
+                // Replaying cannot make the server accept it; keeping it would
+                // retry the same rejection on every flush forever.
+                logger.error("Identify rejected: HTTP \(response.statusCode)")
+                storage.completePendingIdentify(body)
+            case .retryable:
+                logger.error("Identify failed: HTTP \(response.statusCode); will retry")
             }
         } catch {
             logger.error("Identify failed: \(error)")
@@ -290,13 +346,18 @@ actor EventQueue {
                 request.httpBody = try Storage.encoder.encode(PushTokenRevocationBody(token: token))
                 let (_, response) = try await transport.send(request: request)
 
-                if (200...299).contains(response.statusCode) {
+                switch classify(response.statusCode) {
+                case .success:
                     storage.completePushTokenRevocation(token)
-                } else if response.statusCode == 400 || response.statusCode == 413 {
-                    // The server will never accept this token shape. Remove it
-                    // so one legacy/corrupt value cannot block future devices.
+                case .permanent:
+                    // The server will never accept this token — most often a 404
+                    // because it is already gone. Discarding it is what stops one
+                    // dead token from blocking every future registration.
+                    logger.debug(
+                        "Discarding unacceptable revocation: HTTP \(response.statusCode)"
+                    )
                     storage.completePushTokenRevocation(token)
-                } else {
+                case .retryable:
                     logger.error("Push token revocation failed: HTTP \(response.statusCode)")
                     return false
                 }
