@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.1.0-beta.6
+
+### Fixed
+
+- Tapping a notification no longer opens Android's "Complete action using"
+  chooser listing the same app twice, and no longer crashes when the wrong
+  entry is picked. This plugin and the Android SDK it depends on each declared
+  an activity for `dev.notifie.NOTIFICATION_OPEN`; the class names differ, so
+  the manifest merger kept both and Android could not choose between them.
+  Selecting the native one threw `ActivityNotFoundException`, because it
+  navigates the deep link itself while Flutter resolves routes in Dart. The
+  plugin now merges the native activity away and keeps the single handler that
+  hands the payload to Dart.
+- Delivered pushes now arrive on the `notifie_default` channel. The channel is
+  created by the native SDK's `initialize`, which a Flutter host never calls,
+  so Android logged "Notification Channel requested (notifie_default) has not
+  been created by the app" and fell back to Firebase's generic "Miscellaneous"
+  channel. The plugin now creates it on attach, reading the id from the
+  manifest entry the SDK already declares so the two cannot drift apart.
+- `enableNotifications()` now reports a missing Firebase setup as a
+  `NotifieException` explaining what to add, instead of rethrowing the raw
+  platform error naming a generated `values.xml` the developer never wrote.
+- Firebase setup guidance now names the Google Services Gradle plugin.
+  `google-services.json` does nothing until that plugin turns it into the
+  resources Firebase reads, so a developer who had already added the file was
+  told to add the file again.
+
+### Changed
+
+- The bundled `dev.notifie:notifie-android` dependency moves from
+  `0.1.0-beta.2` to `0.1.0-beta.4`, and the plugin no longer resolves it from
+  `mavenLocal()` now that it is published.
+
 ## 0.1.0-beta.5
 
 ### Fixed

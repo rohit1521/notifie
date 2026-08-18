@@ -29,7 +29,7 @@ implementation("dev.notifie:notifie-android:0.1.0-beta.4")
 **Flutter**
 
 ```bash
-flutter pub add notifie_flutter:^0.1.0-beta.5
+flutter pub add notifie_flutter:^0.1.0-beta.6
 ```
 
 **CLI** — `latest` still resolves to a withdrawn build, so pin the version:
@@ -46,7 +46,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 | --- | --- | --- | --- | --- |
 | [Swift](sdks/swift) | iOS 15+ SDK: local notifications, APNs tokens, lifecycle events | CocoaPods | `Notifie` | `0.1.0-beta.2` |
 | [Android](sdks/android) | Android SDK: local alarms, FCM tokens, reboot recovery | Maven Central | `dev.notifie:notifie-android` | `0.1.0-beta.4` |
-| [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.5` |
+| [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.6` |
 | [CLI](packages/cli) | Project configuration and integration diagnostics | npm | `@notifie-dev/cli` | `0.1.0-beta.2` |
 | [Contracts](packages/contracts) | Event, identity, push token and notification wire types | npm | `@notifie-dev/contracts` | `0.1.0-beta.1` |
 

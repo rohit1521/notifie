@@ -37,9 +37,6 @@ android {
 repositories {
     google()
     mavenCentral()
-    // Resolves the SDK before it is on a public repository. Remove once
-    // dev.notifie:notifie-android is published.
-    mavenLocal()
 }
 
 dependencies {
@@ -47,5 +44,5 @@ dependencies {
     // persistence, reboot recovery and drift-free recurrence keep a single
     // implementation. Source inclusion cannot work here: Android resource
     // classes resolve against the compiling module's namespace.
-    implementation "dev.notifie:notifie-android:0.1.0-beta.2"
+    implementation "dev.notifie:notifie-android:0.1.0-beta.4"
 }

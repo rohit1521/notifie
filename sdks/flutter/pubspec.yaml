@@ -1,6 +1,6 @@
 name: notifie_flutter
 description: Notifie Device events and push notification SDK for Flutter apps.
-version: 0.1.0-beta.5
+version: 0.1.0-beta.6
 homepage: https://notifie.dev
 repository: https://github.com/rohit1521/notifie
 issue_tracker: https://github.com/rohit1521/notifie/issues

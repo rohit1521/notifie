@@ -60,8 +60,14 @@ void main() {
     // The message has to name the missing file. "PlatformException(channel-
     // error)" sends a developer looking at their own code rather than at the
     // Firebase setup they have not done yet.
+    //
+    // Naming the file alone is not enough either: dropping google-services.json
+    // into the project does nothing until the Google Services Gradle plugin
+    // reads it, so a developer who has already added the file is told to add
+    // the file again.
     final message = errors.map((error) => error.toString()).join('\n');
     expect(message, contains('google-services.json'));
+    expect(message, contains('com.google.gms.google-services'));
     expect(message, contains('GoogleService-Info.plist'));
     expect(message, contains('enableNotifications()'));
   });
@@ -76,6 +82,24 @@ void main() {
     // Tolerating the failure during initialize is only correct because asking
     // for push explicitly still reports it. Otherwise enabling push would
     // silently do nothing.
-    await expectLater(Notifie.enableNotifications(), throwsA(isA<Object>()));
+    //
+    // Asserting only that *something* threw is what let a raw
+    // PlatformException about a generated values.xml reach developers: it
+    // satisfies `isA<Object>()` perfectly while naming a file they never
+    // wrote. The type and the message both matter.
+    await expectLater(
+      Notifie.enableNotifications(),
+      throwsA(
+        isA<NotifieException>().having(
+          (error) => error.toString(),
+          'message',
+          allOf(
+            contains('enableNotifications()'),
+            contains('google-services.json'),
+            contains('com.google.gms.google-services'),
+          ),
+        ),
+      ),
+    );
   });
 }

@@ -169,9 +169,23 @@ final class Notifie {
 
   static NotifieException _pushUnavailable(Object error) => NotifieException(
         'Remote push is unavailable, so Notifie started without it. Events and '
-        'local notifications still work. Add google-services.json (Android) or '
-        'GoogleService-Info.plist (iOS), then call enableNotifications() to '
-        'turn on remote push. Cause: $error',
+        'local notifications still work. $_firebaseSetupHint Then call '
+        'enableNotifications() to turn on remote push. Cause: $error',
+      );
+
+  // Dropping google-services.json into the project is necessary but not
+  // sufficient: without the Google Services Gradle plugin nothing reads it, so
+  // Firebase fails at runtime looking for the resources the plugin generates.
+  // Naming only the file sends developers to re-add a file they already have.
+  static const String _firebaseSetupHint =
+      'On Android add google-services.json to android/app/ and apply the '
+      'com.google.gms.google-services Gradle plugin, which turns it into the '
+      'resources Firebase reads at runtime. On iOS add GoogleService-Info.plist '
+      'to the Runner target.';
+
+  static NotifieException _pushSetupIncomplete(Object error) => NotifieException(
+        'enableNotifications() could not reach Firebase, so remote push is not '
+        'on. $_firebaseSetupHint Cause: $error',
       );
 
   static Future<void> identify(
@@ -180,8 +194,19 @@ final class Notifie {
   }) =>
       _requireClient().identify(userId, properties: properties);
 
-  static Future<void> enableNotifications() =>
-      _requireClient().enableNotifications();
+  // Unlike initialization, this call is an explicit request for remote push, so
+  // it must fail rather than degrade. It still owes the developer an actionable
+  // reason: the underlying platform error names generated resource files they
+  // have never heard of and never wrote.
+  static Future<void> enableNotifications() async {
+    try {
+      await _requireClient().enableNotifications();
+    } on NotifieException {
+      rethrow;
+    } on Object catch (error) {
+      throw _pushSetupIncomplete(error);
+    }
+  }
 
   static Future<void> registerPushToken({
     required String token,
