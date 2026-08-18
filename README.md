@@ -17,7 +17,7 @@ drift from a release.
 **Swift** — `Podfile`
 
 ```ruby
-pod 'Notifie', '0.1.0-beta.2'
+pod 'Notifie', '0.1.0-beta.3'
 ```
 
 **Android** — `app/build.gradle.kts`
@@ -29,7 +29,7 @@ implementation("dev.notifie:notifie-android:0.1.0-beta.4")
 **Flutter**
 
 ```bash
-flutter pub add notifie_flutter:^0.1.0-beta.6
+flutter pub add notifie_flutter:^0.1.0-beta.7
 ```
 
 **CLI** — `latest` still resolves to a withdrawn build, so pin the version:
@@ -44,9 +44,9 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 
 | Package | Description | Registry | Coordinate | Version |
 | --- | --- | --- | --- | --- |
-| [Swift](sdks/swift) | iOS 15+ SDK: local notifications, APNs tokens, lifecycle events | CocoaPods | `Notifie` | `0.1.0-beta.2` |
+| [Swift](sdks/swift) | iOS 15+ SDK: local notifications, APNs tokens, lifecycle events | CocoaPods | `Notifie` | `0.1.0-beta.3` |
 | [Android](sdks/android) | Android SDK: local alarms, FCM tokens, reboot recovery | Maven Central | `dev.notifie:notifie-android` | `0.1.0-beta.4` |
-| [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.6` |
+| [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.7` |
 | [CLI](packages/cli) | Project configuration and integration diagnostics | npm | `@notifie-dev/cli` | `0.1.0-beta.2` |
 | [Contracts](packages/contracts) | Event, identity, push token and notification wire types | npm | `@notifie-dev/contracts` | `0.1.0-beta.2` |
 
@@ -55,6 +55,8 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 These are fixed in this repository but not yet on the registry.
 
 - **Android `0.1.0-beta.4`** — until `0.1.0-beta.5` is published, two defects remain. Tapping a notification whose deep link the app does not declare crashes the app, and in a Flutter app tapping a locally scheduled notification does nothing at all — the tap resolves to an activity the merged manifest no longer declares. Remote push taps are unaffected.
+- **Swift `0.1.0-beta.2`** — until `0.1.0-beta.3` is published, a revocation the server does not confirm is retried forever, and since registrations run behind revocations a logout can leave the device unable to register for push again. An `identify` made while offline is lost rather than retried.
+- **Flutter `0.1.0-beta.6`** — until `0.1.0-beta.7` is published, tapping a local notification reports nothing on iOS, so the deep link never arrives. The plugin also inherits the Swift `0.1.0-beta.2` issues above, because its podspec pins that exact version.
 
 ## Source available, not yet published
 
