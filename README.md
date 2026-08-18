@@ -48,14 +48,13 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 | [Android](sdks/android) | Android SDK: local alarms, FCM tokens, reboot recovery | Maven Central | `dev.notifie:notifie-android` | `0.1.0-beta.4` |
 | [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.6` |
 | [CLI](packages/cli) | Project configuration and integration diagnostics | npm | `@notifie-dev/cli` | `0.1.0-beta.2` |
-| [Contracts](packages/contracts) | Event, identity, push token and notification wire types | npm | `@notifie-dev/contracts` | `0.1.0-beta.1` |
+| [Contracts](packages/contracts) | Event, identity, push token and notification wire types | npm | `@notifie-dev/contracts` | `0.1.0-beta.2` |
 
 ## Known issues in published versions
 
 These are fixed in this repository but not yet on the registry.
 
 - **Android `0.1.0-beta.4`** — until `0.1.0-beta.5` is published, two defects remain. Tapping a notification whose deep link the app does not declare crashes the app, and in a Flutter app tapping a locally scheduled notification does nothing at all — the tap resolves to an activity the merged manifest no longer declares. Remote push taps are unaffected.
-- **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing, so `LocalNotification` and the schedule types the SDK guides reference will not resolve.
 
 ## Source available, not yet published
 
