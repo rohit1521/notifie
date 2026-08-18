@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.1.0-beta.7
+
+### Fixed
+
+- Tapping a local notification now reaches Dart on iOS. The bridge forwarded a
+  tap only when the payload carried `gk_invocation_id`, which is set on remote
+  pushes; a notification scheduled through `Notifie.schedule` is stamped with
+  `notifie_local_id` instead, so every local tap — and the deep link it
+  carried — was discarded in silence. Both keys are now accepted.
+- Replies to Flutter are delivered on the platform thread. The scheduling,
+  pending, capabilities and permission handlers replied from a bare `Task`,
+  which resumes on Swift's cooperative pool rather than the thread Flutter
+  requires for a method-channel result.
+- The buffers holding notifications that arrive before Dart attaches are now
+  guarded by a lock, capped, and reset when the plugin registers. Previously a
+  new Flutter engine kept the previous engine's "handler ready" flag, so opens
+  were delivered into a dead channel instead of being buffered for the new one.
+- Bundles `Notifie` 0.1.0-beta.3, which stops push registration being stranded
+  after a logout and stops an `identify` made offline being lost. The podspec
+  pinned 0.1.0-beta.2 exactly, so those fixes could not otherwise have reached
+  a Flutter app.
+- The iOS podspec version tracked the Dart version again; it had drifted to
+  0.1.0-beta.3 while pub.dev was on 0.1.0-beta.6, making the pod
+  unresolvable for anyone who asked for the version pub.dev advertised.
+
 ## 0.1.0-beta.6
 
 ### Fixed

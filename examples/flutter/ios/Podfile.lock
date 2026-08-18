@@ -66,10 +66,10 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
-  - Notifie (0.1.0-beta.2)
-  - notifie_flutter (0.1.0-beta.6):
+  - Notifie (0.1.0-beta.3)
+  - notifie_flutter (0.1.0-beta.7):
     - Flutter
-    - Notifie (= 0.1.0-beta.2)
+    - Notifie (= 0.1.0-beta.3)
   - PromisesObjC (2.4.1)
   - shared_preferences_foundation (0.0.1):
     - Flutter
@@ -125,8 +125,8 @@ SPEC CHECKSUMS:
   GoogleUtilities: 766ace00c6b10d8148408f329d10c4f051931850
   integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  Notifie: f5e3fb9c80e1b79852182e5f5b3582bad647ef69
-  notifie_flutter: 91927922989f531b9c85945a21fcabf76a60f36a
+  Notifie: 67e11db9908da1337f6acbd5b46d4a9f2fe5af3b
+  notifie_flutter: 551dee0edec04f68d842115f2caba67a8d7e933e
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
 
