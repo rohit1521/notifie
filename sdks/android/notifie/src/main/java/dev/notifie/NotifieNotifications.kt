@@ -42,7 +42,20 @@ internal object NotifieNotifications {
         if (title.isBlank() && body.isBlank()) return
         createDefaultChannel(context)
         val invocationId = data[Notifie.invocationIdKey] ?: System.nanoTime().toString()
-        val openIntent = Intent(context, NotifieNotificationOpenActivity::class.java).apply {
+        // Resolved by action, scoped to this package, rather than by class.
+        //
+        // Naming the class directly looked safer and was not: the Flutter
+        // plugin removes this SDK's open activity so it can hand the deep link
+        // to Dart, which left every locally scheduled notification in a Flutter
+        // app pointing at a class the merged manifest no longer declares. The
+        // tap then failed with START_CLASS_NOT_FOUND and did nothing at all —
+        // no crash, no log, no open. Remote pushes were unaffected because
+        // Cloud already sends this same action as `click_action`, so this makes
+        // both paths resolve identically.
+        //
+        // setPackage keeps it internal, so the tap can never leave the app.
+        val openIntent = Intent(Notifie.notificationOpenAction).apply {
+            setPackage(context.packageName)
             data.forEach { (key, value) -> putExtra(key, value) }
         }
         val pendingIntent = PendingIntent.getActivity(

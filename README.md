@@ -54,7 +54,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 
 These are fixed in this repository but not yet on the registry.
 
-- **Android `0.1.0-beta.4`** — until `0.1.0-beta.5` is published, tapping a notification whose deep link the app does not declare crashes the app. Flutter apps are unaffected — the plugin handles the tap itself.
+- **Android `0.1.0-beta.4`** — until `0.1.0-beta.5` is published, two defects remain. Tapping a notification whose deep link the app does not declare crashes the app, and in a Flutter app tapping a locally scheduled notification does nothing at all — the tap resolves to an activity the merged manifest no longer declares. Remote push taps are unaffected.
 - **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing, so `LocalNotification` and the schedule types the SDK guides reference will not resolve.
 
 ## Source available, not yet published

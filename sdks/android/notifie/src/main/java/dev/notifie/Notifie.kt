@@ -793,6 +793,18 @@ public object Notifie {
     }
 
     internal const val defaultChannelId = "notifie_default"
+
+    /**
+     * The action every notification tap is launched by.
+     *
+     * This must stay identical to the `<action>` in the SDK manifest, to the
+     * one the Flutter plugin declares on its own open activity, and to the
+     * `click_action` Notifie Cloud sends with a remote push. Resolving a tap by
+     * action rather than by class is what lets a host app replace the activity
+     * — which the Flutter plugin does, because it has to route the deep link
+     * through Dart instead of navigating it natively.
+     */
+    internal const val notificationOpenAction = "dev.notifie.NOTIFICATION_OPEN"
     internal const val invocationIdKey = "gk_invocation_id"
     internal const val deepLinkKey = "gk_deep_link"
     internal const val imageUrlKey = "gk_image_url"
