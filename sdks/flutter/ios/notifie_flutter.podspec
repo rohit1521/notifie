@@ -1,6 +1,9 @@
 Pod::Spec.new do |spec|
   spec.name             = 'notifie_flutter'
-  spec.version          = '0.1.0-beta.3'
+  # Must track pubspec.yaml: CocoaPods resolves against this, so a stale value
+  # makes `pod 'notifie_flutter', '0.1.0-beta.6'` unsatisfiable for a consumer
+  # who read the published Dart version.
+  spec.version          = '0.1.0-beta.6'
   spec.summary          = 'Flutter bridge for the Notifie Device SDK.'
   spec.homepage         = 'https://notifie.dev'
   spec.license          = { :type => 'Apache-2.0' }

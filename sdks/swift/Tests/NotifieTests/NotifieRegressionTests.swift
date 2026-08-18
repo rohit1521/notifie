@@ -291,4 +291,226 @@ final class NotifieRegressionTests: XCTestCase {
         let remaining = await queue.count
         XCTAssertEqual(remaining, 0, "an unfixable batch must be dropped, not retried forever")
     }
+
+    // MARK: - A revocation the server rejects must not strand push forever
+
+    /// Logout enqueues a revocation. When the server answered anything other
+    /// than 2xx/400/413 — a 404 for an already-deleted token being the common
+    /// case — the revocation was kept and retried forever, and because the
+    /// lifecycle runs revocations before registrations the device could never
+    /// register for push again.
+    func testPermanentRevocationFailureDoesNotBlockPushRegistration() async {
+        let storage = makeStorage()
+        storage.enqueuePushTokenRevocation("already-deleted-token")
+        storage.savePendingPushTokenRegistration(
+            PushTokenBody(
+                userId: "user-1",
+                anonymousId: "anon-1",
+                token: "fresh-token",
+                platform: "ios",
+                provider: "apns"
+            )
+        )
+
+        let transport = RoutingTransport { route in
+            route == "DELETE /api/v1/push-tokens" ? 404 : 200
+        }
+        let queue = EventQueue(
+            config: makeConfig(),
+            transport: transport,
+            storage: storage,
+            logger: NotifieLogger(level: .silent)
+        )
+
+        _ = await queue.flushPushTokenLifecycle()
+
+        XCTAssertTrue(
+            transport.calls.contains("POST /api/v1/push-tokens"),
+            "a revocation the server will never accept must not block registration"
+        )
+        XCTAssertTrue(
+            storage.pendingPushTokenRevocations().isEmpty,
+            "an unacceptable revocation must be discarded rather than retried forever"
+        )
+        XCTAssertNil(storage.pendingPushTokenRegistration())
+    }
+
+    /// The opposite guarantee, which the fix must not trade away: a *transient*
+    /// failure still defers registration, so a token is never re-registered
+    /// while its revocation is outstanding.
+    func testRetryableRevocationFailureStillDefersRegistration() async {
+        let storage = makeStorage()
+        storage.enqueuePushTokenRevocation("live-token")
+        storage.savePendingPushTokenRegistration(
+            PushTokenBody(
+                userId: "user-1",
+                anonymousId: "anon-1",
+                token: "fresh-token",
+                platform: "ios",
+                provider: "apns"
+            )
+        )
+
+        let transport = RoutingTransport { route in
+            route == "DELETE /api/v1/push-tokens" ? 503 : 200
+        }
+        let queue = EventQueue(
+            config: makeConfig(),
+            transport: transport,
+            storage: storage,
+            logger: NotifieLogger(level: .silent)
+        )
+
+        _ = await queue.flushPushTokenLifecycle()
+
+        XCTAssertFalse(
+            transport.calls.contains("POST /api/v1/push-tokens"),
+            "a transient revocation failure must still be resolved before re-registering"
+        )
+        XCTAssertEqual(storage.pendingPushTokenRevocations(), ["live-token"])
+    }
+
+    // MARK: - identify must survive being made offline
+
+    /// identify was a single fire-and-forget attempt, so calling it without a
+    /// network lost the identity and its properties permanently.
+    func testIdentifyIsReplayedAfterAnOfflineFailure() async {
+        let storage = makeStorage()
+        let offline = RoutingTransport { _ in 503 }
+        let queue = EventQueue(
+            config: makeConfig(),
+            transport: offline,
+            storage: storage,
+            logger: NotifieLogger(level: .silent)
+        )
+        let body = IdentifyBody(
+            userId: "user-1",
+            anonymousId: "anon-1",
+            properties: ["plan": .string("pro")],
+            timestamp: Date()
+        )
+
+        await queue.sendIdentify(body)
+        XCTAssertNotNil(
+            storage.pendingIdentify(),
+            "an identify that could not be delivered must be retained for replay"
+        )
+
+        let online = RoutingTransport { _ in 200 }
+        let recovered = EventQueue(
+            config: makeConfig(),
+            transport: online,
+            storage: storage,
+            logger: NotifieLogger(level: .silent)
+        )
+        await recovered.flushPendingIdentify()
+
+        XCTAssertTrue(online.calls.contains("POST /api/v1/identify"))
+        XCTAssertNil(
+            storage.pendingIdentify(),
+            "a delivered identify must not be replayed again"
+        )
+    }
+
+    /// Replay must stop when the server has actually rejected the payload,
+    /// otherwise the same rejection repeats on every flush forever.
+    func testPermanentlyRejectedIdentifyIsNotReplayed() async {
+        let storage = makeStorage()
+        let transport = RoutingTransport { _ in 400 }
+        let queue = EventQueue(
+            config: makeConfig(),
+            transport: transport,
+            storage: storage,
+            logger: NotifieLogger(level: .silent)
+        )
+
+        await queue.sendIdentify(
+            IdentifyBody(
+                userId: "user-1",
+                anonymousId: "anon-1",
+                properties: [:],
+                timestamp: Date()
+            )
+        )
+
+        XCTAssertNil(storage.pendingIdentify())
+    }
+
+    func testResetDoesNotLeaveThePreviousUsersIdentifyToReplay() async throws {
+        let storage = makeStorage()
+        let transport = RoutingTransport { _ in 503 }
+        let notifie = Notifie()
+        notifie.setup(config: makeConfig(), transport: transport, storage: storage)
+
+        notifie.performIdentify(userId: "user-1", properties: ["plan": .string("pro")])
+        try await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertNotNil(
+            storage.pendingIdentify(),
+            "precondition: the identify failed and was retained"
+        )
+
+        notifie.resetForTesting()
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        XCTAssertNil(
+            storage.pendingIdentify(),
+            "logout must not leave the previous user's identify to be replayed"
+        )
+    }
+
+    // MARK: - Transient status codes must not be treated as fatal
+
+    /// 408 and 425 fell into the "unexpected" branch and were dropped as
+    /// permanent, discarding events the server SDK would have retried.
+    func testRequestTimeoutIsRetriedRatherThanDropped() async {
+        let storage = makeStorage()
+        let transport = RoutingTransport { _ in 408 }
+        let queue = EventQueue(
+            config: makeConfig(),
+            transport: transport,
+            storage: storage,
+            logger: NotifieLogger(level: .silent)
+        )
+
+        await queue.enqueue(
+            NotifieEvent(
+                messageId: UUID().uuidString.lowercased(),
+                event: "app_open",
+                timestamp: Date(),
+                userId: "u",
+                anonymousId: "a",
+                properties: [:]
+            )
+        )
+        await queue.flush()
+
+        let remaining = await queue.count
+        XCTAssertEqual(remaining, 1, "408 means ask again, so the batch must be kept")
+    }
+}
+
+/// Answers per route, which the shared `MockTransport` cannot do: these cases
+/// turn on one endpoint failing while another succeeds.
+private final class RoutingTransport: Transport, @unchecked Sendable {
+    private let lock = NSLock()
+    private var _calls: [String] = []
+    private let responder: @Sendable (String) -> Int
+
+    init(responder: @escaping @Sendable (String) -> Int) {
+        self.responder = responder
+    }
+
+    var calls: [String] { lock.withLock { _calls } }
+
+    func send(request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        let route = "\(request.httpMethod ?? "?") \(request.url?.path ?? "?")"
+        lock.withLock { _calls.append(route) }
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: responder(route),
+            httpVersion: nil,
+            headerFields: nil
+        )!
+        return (Data(), response)
+    }
 }

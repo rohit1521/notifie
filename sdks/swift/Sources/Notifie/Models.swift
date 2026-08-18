@@ -66,7 +66,10 @@ struct TrackBatchBody: Encodable {
     let sentAt: Date
 }
 
-struct IdentifyBody: Encodable {
+/// Decodable as well as Encodable because an identify that could not be
+/// delivered is persisted and replayed; the server keys user properties by
+/// external id, so dropping one silently strands a profile.
+struct IdentifyBody: Codable, Equatable {
     let userId: String?
     let anonymousId: String?
     let properties: Properties
