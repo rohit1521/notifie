@@ -16,7 +16,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import java.net.URL
-import kotlin.math.absoluteValue
 
 internal object NotifieNotifications {
     fun createDefaultChannel(context: Context) {
