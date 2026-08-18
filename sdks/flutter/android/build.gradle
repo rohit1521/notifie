@@ -32,6 +32,12 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    testOptions {
+        // Robolectric needs the merged resources and manifest to stand up a
+        // context; without this the bridge cannot be exercised at all.
+        unitTests.includeAndroidResources = true
+    }
 }
 
 repositories {
@@ -45,4 +51,11 @@ dependencies {
     // implementation. Source inclusion cannot work here: Android resource
     // classes resolve against the compiling module's namespace.
     implementation "dev.notifie:notifie-android:0.1.0-beta.4"
+
+    // The bridge is the seam between Dart and the native SDK, and a mismatch
+    // there fails only on a device: the notification-tap regression reached a
+    // release precisely because nothing here was executed by a test.
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.robolectric:robolectric:4.14.1"
+    testImplementation "org.mockito:mockito-core:5.14.2"
 }
