@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -126,9 +127,26 @@ public class NotifieNotificationOpenActivity : Activity() {
 }
 
 private fun launchNotificationDestination(context: Context, data: Map<String, String>) {
-    val launchIntent = Notifie.deepLink(data)?.let {
-        Intent(Intent.ACTION_VIEW, Uri.parse(it))
-    } ?: context.packageManager.getLaunchIntentForPackage(context.packageName)
-    launchIntent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-    if (launchIntent != null) context.startActivity(launchIntent)
+    val deepLink = Notifie.deepLink(data)
+    if (deepLink != null &&
+        startDestination(context, Intent(Intent.ACTION_VIEW, Uri.parse(deepLink)))
+    ) {
+        return
+    }
+    // A deep link the host app does not declare must never crash it, and must not
+    // silently lose the tap either. Fall back to opening the app itself.
+    startDestination(context, context.packageManager.getLaunchIntentForPackage(context.packageName))
+}
+
+private fun startDestination(context: Context, intent: Intent?): Boolean {
+    if (intent == null) return false
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    return try {
+        context.startActivity(intent)
+        true
+    } catch (error: ActivityNotFoundException) {
+        false
+    } catch (error: SecurityException) {
+        false
+    }
 }
