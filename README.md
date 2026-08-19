@@ -23,7 +23,7 @@ pod 'Notifie', '0.1.0-beta.3'
 **Android** — `app/build.gradle.kts`
 
 ```kotlin
-implementation("dev.notifie:notifie-android:0.1.0-beta.4")
+implementation("dev.notifie:notifie-android:0.1.0-beta.5")
 ```
 
 **Flutter**
@@ -45,7 +45,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 | Package | Description | Registry | Coordinate | Version |
 | --- | --- | --- | --- | --- |
 | [Swift](sdks/swift) | iOS 15+ SDK: local notifications, APNs tokens, lifecycle events | CocoaPods | `Notifie` | `0.1.0-beta.3` |
-| [Android](sdks/android) | Android SDK: local alarms, FCM tokens, reboot recovery | Maven Central | `dev.notifie:notifie-android` | `0.1.0-beta.4` |
+| [Android](sdks/android) | Android SDK: local alarms, FCM tokens, reboot recovery | Maven Central | `dev.notifie:notifie-android` | `0.1.0-beta.5` |
 | [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.7` |
 | [CLI](packages/cli) | Project configuration and integration diagnostics | npm | `@notifie-dev/cli` | `0.1.0-beta.2` |
 | [Contracts](packages/contracts) | Event, identity, push token and notification wire types | npm | `@notifie-dev/contracts` | `0.1.0-beta.1` |
@@ -54,7 +54,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 
 These are fixed in this repository but not yet on the registry.
 
-- **Android `0.1.0-beta.4`** — until `0.1.0-beta.5` is published, four defects remain. Tapping a notification whose deep link the app does not declare crashes the app; in a Flutter app tapping a locally scheduled notification does nothing at all; two local notification ids whose hashes collide share one alarm, so one silently never fires and cancelling either cancels both; and a push token re-registered while an earlier revocation is still retrying can be deleted, leaving the device permanently unreachable.
+- **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing, so `LocalNotification` and the schedule types the SDK guides reference will not resolve. The release is ready and waiting on an npm credential.
 
 ## Source available, not yet published
 
