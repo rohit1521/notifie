@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.1.0-beta.8
+
+### Fixed
+
+- Two local reminders whose identifiers happen to share a 32-bit hash no longer
+  collapse onto one alarm on Android. The native SDK derived a `PendingIntent`
+  request code from `String.hashCode`, which is stable but not unique, so
+  scheduling the second reminder silently replaced the first, cancelling either
+  cancelled both, and `pendingScheduled` kept reporting one that could no longer
+  fire. Codes are now allocated and persisted per identifier.
+- `pendingScheduled` now reports what the operating system will actually
+  deliver on Android. It previously read only the SDK's own store, so a
+  reminder whose alarm had been lost was reported as pending; a missing alarm
+  is now re-armed and an elapsed one-shot is dropped.
+- Signing out while offline and signing back in no longer revokes the push
+  token the device has just re-registered on Android. Registration bypassed the
+  revocation gate, and because Firebase returns the same token after a logout,
+  the queued revocation deleted the live registration and left the device
+  silently unreachable while the plugin believed push was active.
+- Bundles `dev.notifie:notifie-android` 0.1.0-beta.5, which carries the three
+  fixes above. The plugin pins that artifact exactly, so they could not
+  otherwise have reached a Flutter app.
+
 ## 0.1.0-beta.7
 
 ### Fixed
