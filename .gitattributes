@@ -1,0 +1,18 @@
+* text=auto eol=lf
+
+# Gradle ships gradlew.bat with CRLF and cmd.exe is unreliable without it.
+# Normalising every file to LF silently rewrote a script we redistribute.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.p8 binary
+*.p12 binary
+*.mobileprovision binary
+
+pnpm-lock.yaml linguist-generated=false
+packages/db/src/generated.ts linguist-generated=true
