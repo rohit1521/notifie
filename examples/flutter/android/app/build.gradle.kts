@@ -4,9 +4,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-if (file("google-services.json").exists()) {
-    apply(plugin = "com.google.gms.google-services")
-}
+// Applied unconditionally. This was guarded by a `file(...).exists()` check,
+// which meant a missing google-services.json produced a build that succeeded
+// and silently could not receive a push — the configuration every developer
+// actually ships, never exercised. The config is committed, so its absence is
+// a broken checkout and should fail here rather than at a user's device.
+apply(plugin = "com.google.gms.google-services")
 
 android {
     namespace = "com.example.notifie_flutter_example"

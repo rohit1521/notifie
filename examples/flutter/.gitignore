@@ -32,7 +32,11 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
-android/app/google-services.json
+# android/app/google-services.json is deliberately committed: it belongs to a
+# Firebase project created solely to be public, and without it this example can
+# neither send nor receive a push, which is how every Android defect this
+# project shipped reached a release. The iOS plist is not, because no equivalent
+# throwaway iOS app is registered.
 ios/Runner/GoogleService-Info.plist
 lib/firebase_options.dart
 
