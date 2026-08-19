@@ -77,7 +77,7 @@ Guides live in [docs-public](docs-public) and at
 
 ```bash
 corepack enable
-pnpm install --frozen-lockfile
+pnpm install --no-frozen-lockfile
 pnpm check
 ```
 
@@ -87,6 +87,9 @@ Native SDKs use their own toolchains:
 xcrun swift test --package-path sdks/swift
 cd sdks/flutter && flutter test
 ```
+
+Publishing is manual for every registry except npm. See
+[RELEASING.md](RELEASING.md).
 
 ## Security
 
