@@ -4,7 +4,7 @@
 
 ```bash
 corepack enable
-pnpm install --frozen-lockfile
+pnpm install --no-frozen-lockfile
 pnpm check
 ```
 
@@ -21,6 +21,12 @@ pnpm check
 These SDKs must build and test without any Notifie Cloud service present. Do not
 add a dependency on a hosted endpoint, and do not widen a contract to expose
 server-only concepts.
+
+## Releasing
+
+A merged fix has reached nobody until it is published, and publishing is manual
+for every registry except npm. See [RELEASING.md](RELEASING.md) before changing
+a version or shipping a release.
 
 ## Security
 
