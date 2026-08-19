@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "513155899916",
+    "project_id": "notifie-examples-28907",
+    "storage_bucket": "notifie-examples-28907.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:513155899916:android:c80a4f5af9a0b6417d4429",
+        "android_client_info": {
+          "package_name": "dev.notifie.androidtest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATIIgIVd1MSqMhn_tOM1w_XY9Y_RTW8WY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:513155899916:android:2a382ca8a2e2fe677d4429",
+        "android_client_info": {
+          "package_name": "dev.notifie.flutterexample"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATIIgIVd1MSqMhn_tOM1w_XY9Y_RTW8WY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

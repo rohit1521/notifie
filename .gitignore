@@ -21,6 +21,13 @@ coverage/
 *.mobileprovision
 **/GoogleService-Info.plist
 **/google-services.json
+# ...except the two example configs, which belong to a Firebase project
+# created solely to be public. Client configuration ships inside every
+# APK; the service account that can actually send a notification is not
+# here. Without these, no example can send or receive a push, which is
+# the gap every Android defect this project shipped went through.
+!examples/android/app/google-services.json
+!examples/flutter/android/app/google-services.json
 **/*service-account*.json
 notifie.json
 
@@ -37,5 +44,4 @@ DerivedData/
 
 examples/ios/NotifieDemo.xcodeproj/
 examples/ios/build/
-examples/android/app/google-services.json
 examples/android/local.properties
