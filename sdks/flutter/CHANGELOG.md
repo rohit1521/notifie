@@ -4,6 +4,14 @@
 
 ### Fixed
 
+- Tapping a local notification now opens the app and delivers its deep link on
+  Android. The native SDK addressed the tap to its own open activity by class,
+  and this plugin removes that activity from the merged manifest so it can route
+  deep links through Dart rather than navigating them natively — so every
+  locally scheduled notification pointed at a class the app did not declare. The
+  tap failed with `START_CLASS_NOT_FOUND` and did nothing at all: no crash, no
+  log, no open. Taps are now addressed by intent action, which is what lets a
+  host app legitimately replace the activity, and remain scoped to the app.
 - Two local reminders whose identifiers happen to share a 32-bit hash no longer
   collapse onto one alarm on Android. The native SDK derived a `PendingIntent`
   request code from `String.hashCode`, which is stable but not unique, so
@@ -19,9 +27,9 @@
   revocation gate, and because Firebase returns the same token after a logout,
   the queued revocation deleted the live registration and left the device
   silently unreachable while the plugin believed push was active.
-- Bundles `dev.notifie:notifie-android` 0.1.0-beta.5, which carries the three
-  fixes above. The plugin pins that artifact exactly, so they could not
-  otherwise have reached a Flutter app.
+- Bundles `dev.notifie:notifie-android` 0.1.0-beta.5, which carries the fixes
+  above. The plugin pins that artifact exactly, so they could not otherwise have
+  reached a Flutter app — 0.1.0-beta.7 still pinned 0.1.0-beta.4.
 
 ## 0.1.0-beta.7
 
