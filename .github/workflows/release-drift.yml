@@ -1,0 +1,31 @@
+name: Release drift
+
+# Publishing is manual for Android, Flutter and Swift -- publish.yml automates
+# npm only -- so a forgotten release leaves no trace anywhere. main looks
+# healthy, CI is green, the fix is in the tree, and users keep hitting a bug
+# that reads as fixed.
+#
+# This runs on a schedule rather than on a merge because that is the shape of
+# the failure: the gap opens quietly after the pull request is closed and
+# everyone has moved on.
+on:
+  schedule:
+    # Monday morning, so an unpublished fix is the first thing the week surfaces.
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Published versions match the tree
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Compare each SDK against its registry
+        run: .github/scripts/check-release-drift.sh

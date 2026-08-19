@@ -54,9 +54,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 
 These are fixed in this repository but not yet on the registry.
 
-- **Android `0.1.0-beta.4`** — until `0.1.0-beta.5` is published, two defects remain. Tapping a notification whose deep link the app does not declare crashes the app, and in a Flutter app tapping a locally scheduled notification does nothing at all — the tap resolves to an activity the merged manifest no longer declares. Remote push taps are unaffected.
-- **Swift `0.1.0-beta.2`** — until `0.1.0-beta.3` is published, a revocation the server does not confirm is retried forever, and since registrations run behind revocations a logout can leave the device unable to register for push again. An `identify` made while offline is lost rather than retried.
-- **Flutter `0.1.0-beta.6`** — until `0.1.0-beta.7` is published, tapping a local notification reports nothing on iOS, so the deep link never arrives. The plugin also inherits the Swift `0.1.0-beta.2` issues above, because its podspec pins that exact version.
+- **Android `0.1.0-beta.4`** — until `0.1.0-beta.5` is published, four defects remain. Tapping a notification whose deep link the app does not declare crashes the app. In a Flutter app, tapping a locally scheduled notification does nothing at all — the tap resolves to an activity the merged manifest no longer declares; remote push taps are unaffected. Two local reminders whose identifiers happen to share a 32-bit hash collapse onto one alarm, so scheduling the second silently replaces the first and cancelling either cancels both, while `pending()` keeps reporting the one that can no longer fire. And signing out while offline, then signing back in, revokes the push token the device has just re-registered, leaving it silently unreachable.
 
 ## Source available, not yet published
 

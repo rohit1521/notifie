@@ -13,6 +13,25 @@ permissions:
   contents: read
 
 jobs:
+  # A version published to Maven Central, pub.dev, CocoaPods or npm can never be
+  # replaced, so shipping code that changes without a version bump cannot reach a
+  # user no matter how cleanly it merges. Nothing else in this pipeline notices:
+  # the diff looks complete and every test passes.
+  release-guard:
+    name: Version bump
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The guard compares against the base branch, which a shallow clone
+          # does not contain.
+          fetch-depth: 0
+      - name: Shipping code requires a version bump
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-version-bump') }}
+        run: .github/scripts/check-version-bumps.sh "origin/${{ github.base_ref }}"
+
   typescript:
     name: TypeScript
     runs-on: ubuntu-latest
