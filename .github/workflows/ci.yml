@@ -83,6 +83,83 @@ jobs:
   # flutter analyze and flutter test never compile the plugin's Swift half,
   # which is how a bridge that silently discarded every local notification tap
   # on iOS reached a release. Building the example is what compiles it.
+  # The only job that installs what a developer installs.
+  #
+  # Every other job builds the checked-out tree, which is how notifie_flutter
+  # 0.1.0-beta.7 shipped pinning notifie-android 0.1.0-beta.4 — three fixed
+  # defects still live for anyone who ran `flutter pub add`, while the whole
+  # pipeline was green. Nothing compared the published plugin against the
+  # artifact it claims to bundle.
+  #
+  # No mavenLocal, no path dependency, no project substitution: the app is
+  # created from scratch and resolves only pub.dev and Maven Central.
+  registry-smoke:
+    name: Registry smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Build a throwaway app from published packages only
+        run: |
+          set -euo pipefail
+          flutter_version="$(sed -n 's/^version: *//p' sdks/flutter/pubspec.yaml)"
+          echo "This repository advertises notifie_flutter $flutter_version"
+
+          flutter create --platforms=android "$RUNNER_TEMP/consumer"
+          cd "$RUNNER_TEMP/consumer"
+          # Exact version, not a caret range: the point is to prove the version
+          # this repository tells people to install is the one that works.
+          flutter pub add "notifie_flutter:$flutter_version"
+          flutter build apk --debug
+
+      - name: The published plugin must bundle the published native SDK
+        run: |
+          set -euo pipefail
+          want="$(grep -o 'notifieVersion = "[^"]*"' \
+            sdks/android/notifie/build.gradle.kts | cut -d'"' -f2)"
+          resolved="$(cd "$RUNNER_TEMP/consumer/android" \
+            && ./gradlew :app:dependencies --configuration debugRuntimeClasspath \
+            | grep -o 'dev\.notifie:notifie-android:[0-9A-Za-z.-]*' \
+            | head -1 | cut -d: -f3)"
+
+          echo "resolved from Maven Central: ${resolved:-<none>}"
+          echo "advertised by this repo    : $want"
+          if [ -z "$resolved" ]; then
+            echo "::error::The published plugin pulled in no notifie-android at all."
+            exit 1
+          fi
+          if [ "$resolved" != "$want" ]; then
+            echo "::error::Installing notifie_flutter gives notifie-android $resolved, but this repository advertises $want. Publish a plugin release that pins $want."
+            exit 1
+          fi
+
+      - name: Exactly one activity may handle a notification tap
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/consumer"
+          found=0
+          for manifest in $(find build/app/intermediates -path '*merged_manifest*' -name AndroidManifest.xml); do
+            found=1
+            count=$(grep -c 'android:name="dev.notifie.NOTIFICATION_OPEN"' "$manifest" || true)
+            echo "$count handler(s) in $manifest"
+            if [ "$count" != "1" ]; then
+              echo "::error::$manifest declares $count handlers; exactly 1 is required."
+              exit 1
+            fi
+          done
+          if [ "$found" = "0" ]; then
+            echo "::error::No merged manifest found. The check cannot pass vacuously."
+            exit 1
+          fi
+
   flutter-ios:
     name: Flutter SDK (iOS)
     runs-on: macos-latest
