@@ -9,12 +9,28 @@ buildscript {
 
     dependencies {
         classpath "com.android.tools.build:gradle:8.9.1"
+        // Kept on the classpath but deliberately not applied below. On AGP 8
+        // the Flutter Gradle Plugin applies kotlin-android to this project
+        // itself when the plugin does not, so the Kotlin sources still compile
+        // for consumers who have not moved to built-in Kotlin.
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0"
     }
 }
 
 apply plugin: "com.android.library"
-apply plugin: "org.jetbrains.kotlin.android"
+
+// `apply plugin: "org.jetbrains.kotlin.android"` used to follow. Applying KGP
+// from a plugin is what Flutter now warns about — "future versions of Flutter
+// will fail to build if your app uses plugins that apply KGP" — because AGP 9
+// provides Kotlin itself and a second application conflicts with it.
+
+// Set through the Kotlin extension rather than `android { kotlinOptions }`,
+// which is tied to the plugin this project no longer applies.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
 
 android {
     namespace = "dev.notifie.flutter"
@@ -29,9 +45,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 
     testOptions {
         // Robolectric needs the merged resources and manifest to stand up a

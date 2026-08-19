@@ -54,6 +54,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 
 These are fixed in this repository but not yet on the registry.
 
+- **Flutter `0.1.0-beta.8`** — until `0.1.0-beta.9` is published, every build prints a Flutter warning that this plugin applies the Kotlin Gradle Plugin, and a future Flutter version will refuse to build an app that uses it. Nothing is broken today. The fix is committed but held back until it is built against an older Flutter, because removing the plugin application incorrectly would break compilation for every consumer.
 - **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing, so `LocalNotification` and the schedule types the SDK guides reference will not resolve. The release is ready and waiting on an npm credential.
 
 ## Source available, not yet published
