@@ -85,8 +85,9 @@ final class Notifie {
     final preferences = await SharedPreferences.getInstance();
     final store = SharedPreferencesNotifieStore(preferences);
     await _disposeCurrentClient();
+    var reportedPushUnavailable = false;
     if (registerFirebaseBackgroundHandler) {
-      await _reportOptionalPushFailureAsync(
+      reportedPushUnavailable = await _reportOptionalPushFailureAsync(
         onError,
         FirebasePushTokenProvider.registerBackgroundHandler,
       );
@@ -114,8 +115,12 @@ final class Notifie {
       // still track events and schedule local notifications, so a failure to
       // attach the push provider is reported and then tolerated here. An
       // explicit enableNotifications() call still throws.
+      // Both steps fail together when Firebase is absent, and they produce the
+      // same message, so reporting both sends a developer hunting for two
+      // problems that are one. The attach still runs; only the duplicate
+      // report is suppressed.
       await _reportOptionalPushFailureAsync(
-        onError,
+        reportedPushUnavailable ? null : onError,
         client.attachPushProvider,
       );
       for (final pending
@@ -156,14 +161,20 @@ final class Notifie {
   // Remote push depends on Firebase, which most projects add only after their
   // first event has arrived. These helpers keep that dependency optional
   // during initialization instead of failing the whole SDK.
-  static Future<void> _reportOptionalPushFailureAsync(
+  /// Runs [action], reporting a failure as an optional-push problem.
+  ///
+  /// Returns whether it reported, so one initialize does not tell a developer
+  /// about the same missing Firebase twice.
+  static Future<bool> _reportOptionalPushFailureAsync(
     NotifieErrorCallback? onError,
     Future<void> Function() action,
   ) async {
     try {
       await action();
+      return false;
     } on Object catch (error) {
       onError?.call(_pushUnavailable(error));
+      return true;
     }
   }
 
