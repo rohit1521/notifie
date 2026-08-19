@@ -253,16 +253,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # This repository must never contain provider credentials. The stock
-      # React Native debug keystore is the one allowed exception: it is public,
-      # signs debug builds only, and is byte-identical in every RN project.
+      # This repository must never contain provider credentials. Three files are
+      # allowed, each by exact path so a real credential beside them is still
+      # rejected: the stock React Native debug keystore, which is public, signs
+      # debug builds only and is byte-identical in every RN project; and the two
+      # example google-services.json files, which are client configuration for a
+      # Firebase project created solely to be public. They ship inside every APK
+      # and cannot send a notification -- that needs the service account, which
+      # is not here. Without them no example can receive a push, which is the
+      # gap every Android defect this project shipped went through.
       - name: Reject credential files
         run: |
           found=$(git ls-files \
             '*.p8' '*.p12' '*.mobileprovision' '*.keystore' '*.jks' \
             '**/google-services.json' '**/GoogleService-Info.plist' \
             '**/*service-account*.json' '.env' \
-            | grep -v '^examples/react-native/android/app/debug.keystore$' || true)
+            | grep -vx 'examples/react-native/android/app/debug.keystore' \
+            | grep -vx 'examples/android/app/google-services.json' \
+            | grep -vx 'examples/flutter/android/app/google-services.json' || true)
           if [ -n "$found" ]; then
             echo "Credential files must not be committed:"
             echo "$found"
