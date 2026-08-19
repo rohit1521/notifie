@@ -50,7 +50,7 @@ dependencies {
     // persistence, reboot recovery and drift-free recurrence keep a single
     // implementation. Source inclusion cannot work here: Android resource
     // classes resolve against the compiling module's namespace.
-    implementation "dev.notifie:notifie-android:0.1.0-beta.4"
+    implementation "dev.notifie:notifie-android:0.1.0-beta.5"
 
     // The bridge is the seam between Dart and the native SDK, and a mismatch
     // there fails only on a device: the notification-tap regression reached a
