@@ -44,7 +44,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 
 | Package | Description | Registry | Coordinate | Version |
 | --- | --- | --- | --- | --- |
-| [Swift](sdks/swift) | iOS 15+ SDK: local notifications, APNs tokens, lifecycle events | CocoaPods | `Notifie` | `0.1.0-beta.3` |
+| [Swift](sdks/swift) | iOS 15+ SDK: events, APNs tokens, notification callbacks | CocoaPods | `Notifie` | `0.1.0-beta.3` |
 | [Android](sdks/android) | Android SDK: local alarms, FCM tokens, reboot recovery | Maven Central | `dev.notifie:notifie-android` | `0.1.0-beta.5` |
 | [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.8` |
 | [CLI](packages/cli) | Project configuration and integration diagnostics | npm | `@notifie-dev/cli` | `0.1.0-beta.2` |
@@ -54,8 +54,8 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 
 These are fixed in this repository but not yet on the registry.
 
-- **Flutter `0.1.0-beta.8`** — until `0.1.0-beta.9` is published, a tap on a locally scheduled notification opens the app but never reaches Dart, so `onNotificationOpened` does not fire and the deep link is lost — a Flutter Android app cannot tell which of its own notifications was tapped. Remote pushes are unaffected: they arrive through Firebase, which is why the two paths disagree. Also, every build prints a Flutter warning that this plugin applies the Kotlin Gradle Plugin, and a future Flutter version will refuse to build an app that uses it; and initializing without Firebase reports the same missing-Firebase condition through `onError` twice, which reads like two separate problems. The release is held back until the Kotlin change is built against an older Flutter, because removing the plugin application incorrectly would break compilation for every consumer.
-- **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing, so `LocalNotification` and the schedule types the SDK guides reference will not resolve. The release is ready and waiting on an npm credential.
+- **Flutter `0.1.0-beta.8`** — until `0.1.0-beta.9` is published, every build prints a Flutter warning that this plugin applies the Kotlin Gradle Plugin, and a future Flutter version will refuse to build an app that uses it; and initializing without Firebase reports the same missing-Firebase condition through `onError` twice, which reads like two separate problems. Neither affects remote push, which is the supported surface. The release is held back until the Kotlin change is built against an older Flutter, because removing the plugin application incorrectly would break compilation for every consumer.
+- **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing. Nothing documented references them, so this affects only a consumer importing the types directly. The release is ready and waiting on an npm credential.
 
 ## Source available, not yet published
 
@@ -66,7 +66,7 @@ a git checkout.
 | Package | Description | Reserved coordinate |
 | --- | --- | --- |
 | [Server SDK](packages/server) | Typed track, identify and notify calls from a Node backend | `@notifie-dev/server` |
-| [React Native](sdks/react-native) | Events and FCM tokens; no local notification scheduling yet | `@notifie-dev/react-native` |
+| [React Native](sdks/react-native) | Events and FCM tokens | `@notifie-dev/react-native` |
 | [Web](sdks/web) | Browser event client | `@notifie-dev/web` |
 
 ## Documentation

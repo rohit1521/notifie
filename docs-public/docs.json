@@ -22,7 +22,6 @@
         "pages": [
           "index",
           "quickstart",
-          "local-notifications",
           "concepts/events-and-identities"
         ]
       },
