@@ -146,18 +146,39 @@ public class NotifieNotificationOpenActivity : Activity() {
 private fun launchNotificationDestination(context: Context, data: Map<String, String>) {
     val deepLink = Notifie.deepLink(data)
     if (deepLink != null &&
-        startDestination(context, Intent(Intent.ACTION_VIEW, Uri.parse(deepLink)))
+        startDestination(context, Intent(Intent.ACTION_VIEW, Uri.parse(deepLink)), data)
     ) {
         return
     }
     // A deep link the host app does not declare must never crash it, and must not
     // silently lose the tap either. Fall back to opening the app itself.
-    startDestination(context, context.packageManager.getLaunchIntentForPackage(context.packageName))
+    startDestination(
+        context,
+        context.packageManager.getLaunchIntentForPackage(context.packageName),
+        data,
+    )
 }
 
-private fun startDestination(context: Context, intent: Intent?): Boolean {
+private fun startDestination(
+    context: Context,
+    intent: Intent?,
+    data: Map<String, String>,
+): Boolean {
     if (intent == null) return false
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+    // The notification payload travels to the destination as extras, which is what
+    // makes Notifie.deepLink(...) and Notifie.notificationOpened(...) usable from a
+    // host activity: without it the app is started with a bare intent and cannot
+    // tell which notification produced it.
+    //
+    // Only when the destination is this app. An https deep link legitimately
+    // resolves to a browser, and custom data is the host's own payload -- it must
+    // not be handed to whichever third-party app happens to claim the scheme.
+    if (resolvesToThisApp(context, intent)) {
+        data.forEach { (key, value) -> intent.putExtra(key, value) }
+    }
+
     return try {
         context.startActivity(intent)
         true
@@ -166,4 +187,9 @@ private fun startDestination(context: Context, intent: Intent?): Boolean {
     } catch (error: SecurityException) {
         false
     }
+}
+
+private fun resolvesToThisApp(context: Context, intent: Intent): Boolean {
+    val resolved = context.packageManager.resolveActivity(intent, 0) ?: return false
+    return resolved.activityInfo?.packageName == context.packageName
 }

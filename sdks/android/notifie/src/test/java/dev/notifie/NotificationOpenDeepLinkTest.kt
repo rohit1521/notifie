@@ -87,6 +87,78 @@ class NotificationOpenDeepLinkTest {
         assertEquals(deepLink, started.first().data.toString())
     }
 
+    /**
+     * The payload is what makes the tap actionable. Without it the host is started
+     * with a bare intent and cannot tell which notification produced it, which is
+     * exactly what `Notifie.deepLink(...)` and `Notifie.notificationOpened(...)`
+     * are documented to consume.
+     */
+    @Test
+    fun theNotificationPayloadTravelsToADestinationInsideThisApp() {
+        val deepLink = "myapp://orders/42"
+        registerActivity(
+            ComponentName(application.packageName, "dev.notifie.TestOrdersActivity"),
+            IntentFilter(Intent.ACTION_VIEW).apply {
+                addCategory(Intent.CATEGORY_DEFAULT)
+                addDataScheme("myapp")
+            },
+        )
+
+        val controller = Robolectric.buildActivity(
+            NotifieNotificationOpenActivity::class.java,
+            openIntent(deepLink).putExtra("orderId", "A-1183"),
+        )
+
+        controller.create()
+
+        val started = startedActivities(controller.get()).first()
+        assertEquals(deepLink, started.data.toString())
+        assertEquals("A-1183", started.getStringExtra("orderId"))
+        assertEquals(deepLink, started.getStringExtra(Notifie.deepLinkKey))
+    }
+
+    @Test
+    fun thePayloadAlsoTravelsWhenTheTapFallsBackToTheLauncher() {
+        val controller = Robolectric.buildActivity(
+            NotifieNotificationOpenActivity::class.java,
+            Intent(application, NotifieNotificationOpenActivity::class.java)
+                .putExtra("orderId", "A-1183"),
+        )
+
+        controller.create()
+
+        val started = startedActivities(controller.get()).first()
+        assertEquals("A-1183", started.getStringExtra("orderId"))
+    }
+
+    /**
+     * An https deep link legitimately resolves to a browser. Custom data belongs to
+     * the host app, so handing it to whichever third-party app claims the scheme
+     * would leak application data off the app entirely.
+     */
+    @Test
+    fun thePayloadIsWithheldFromAnExternalApp() {
+        val deepLink = "https://example.com/orders/42"
+        registerActivity(
+            ComponentName("com.example.browser", "com.example.browser.BrowserActivity"),
+            IntentFilter(Intent.ACTION_VIEW).apply {
+                addCategory(Intent.CATEGORY_DEFAULT)
+                addDataScheme("https")
+            },
+        )
+
+        val controller = Robolectric.buildActivity(
+            NotifieNotificationOpenActivity::class.java,
+            openIntent(deepLink).putExtra("orderId", "A-1183"),
+        )
+
+        controller.create()
+
+        val started = startedActivities(controller.get()).first()
+        assertEquals(deepLink, started.data.toString())
+        assertEquals(null, started.getStringExtra("orderId"))
+    }
+
     private fun openIntent(deepLink: String): Intent =
         Intent(application, NotifieNotificationOpenActivity::class.java)
             .putExtra(Notifie.deepLinkKey, deepLink)
