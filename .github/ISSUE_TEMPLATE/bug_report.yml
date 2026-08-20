@@ -29,7 +29,7 @@ body:
     attributes:
       label: Version
       description: The exact version installed, not "latest".
-      placeholder: 0.1.0-beta.5
+      placeholder: 0.1.0-beta.6
     validations:
       required: true
 

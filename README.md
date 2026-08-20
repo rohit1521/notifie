@@ -23,7 +23,7 @@ pod 'Notifie', '0.1.0-beta.3'
 **Android** — `app/build.gradle.kts`
 
 ```kotlin
-implementation("dev.notifie:notifie-android:0.1.0-beta.5")
+implementation("dev.notifie:notifie-android:0.1.0-beta.6")
 ```
 
 **Flutter**
@@ -45,7 +45,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 | Package | Description | Registry | Coordinate | Version |
 | --- | --- | --- | --- | --- |
 | [Swift](sdks/swift) | iOS 15+ SDK: events, APNs tokens, notification callbacks | CocoaPods | `Notifie` | `0.1.0-beta.3` |
-| [Android](sdks/android) | Android SDK: events, FCM tokens, notification handling | Maven Central | `dev.notifie:notifie-android` | `0.1.0-beta.5` |
+| [Android](sdks/android) | Android SDK: events, FCM tokens, notification handling | Maven Central | `dev.notifie:notifie-android` | `0.1.0-beta.6` |
 | [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.8` |
 | [CLI](packages/cli) | Project configuration and integration diagnostics | npm | `@notifie-dev/cli` | `0.1.0-beta.2` |
 | [Contracts](packages/contracts) | Event, identity, push token and notification wire types | npm | `@notifie-dev/contracts` | `0.1.0-beta.1` |
@@ -54,7 +54,6 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 
 These are fixed in this repository but not yet on the registry.
 
-- **Android `0.1.0-beta.5`** — until `0.1.0-beta.6` is published, a notification tap starts your activity with no payload, so an app can be sent custom data and a deep link but cannot read either: the open is attributed and the deep link still routes, but the destination screen cannot tell which order, message or user the tap was about. Sending customData is therefore pointless on Android until this is published.
 - **Flutter `0.1.0-beta.8`** — until `0.1.0-beta.9` is published, every build prints a Flutter warning that this plugin applies the Kotlin Gradle Plugin, and a future Flutter version will refuse to build an app that uses it; and initializing without Firebase reports the same missing-Firebase condition through `onError` twice, which reads like two separate problems. Neither affects remote push, which is the supported surface. The release is held back until the Kotlin change is built against an older Flutter, because removing the plugin application incorrectly would break compilation for every consumer.
 - **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing. Nothing documented references them, so this affects only a consumer importing the types directly. The release is ready and waiting on an npm credential.
 
