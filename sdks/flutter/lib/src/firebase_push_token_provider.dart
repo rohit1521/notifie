@@ -186,9 +186,21 @@ final class FirebasePushTokenProvider extends PushTokenProvider {
     if (Firebase.apps.isEmpty) await Firebase.initializeApp();
   }
 
+  /// Attaches the channel the native SDKs use to report notification opens.
+  ///
+  /// Both mobile platforms need it, for different halves of the problem. iOS
+  /// has no other path at all. Android has one for remote pushes only —
+  /// `FirebaseMessaging.onMessageOpenedApp` — and locally scheduled
+  /// notifications are posted by this SDK rather than by Firebase, so without
+  /// this bridge a Flutter Android app could schedule a local notification,
+  /// watch the user tap it, and never learn which one was tapped.
+  ///
+  /// The Android side only forwards taps carrying its local-notification id,
+  /// so remote opens keep arriving once through Firebase rather than twice.
   Future<void> _attachNativeOpenBridge() async {
     if (_nativeOpenBridgeAttached ||
-        defaultTargetPlatform != TargetPlatform.iOS) {
+        (defaultTargetPlatform != TargetPlatform.iOS &&
+            defaultTargetPlatform != TargetPlatform.android)) {
       return;
     }
     _nativeOpenBridgeAttached = true;
