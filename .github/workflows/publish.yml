@@ -175,6 +175,40 @@ jobs:
             "Broken executable entrypoint; use 0.1.0-beta.2 or newer." \
             --registry https://registry.npmjs.org/
 
+      # npm creates `latest` on first publish and offers no way to delete it, so
+      # it still points at the withdrawn 0.1.0-beta.1: a plain
+      # `npm install -g @notifie-dev/cli` installs a CLI that fails on startup.
+      #
+      # Moving it is guarded rather than automatic. Once a stable version
+      # exists, pointing `latest` at a prerelease would downgrade every plain
+      # install — which is what the "refuse a prerelease under latest" check
+      # above prevents at publish time. So this only runs while every published
+      # version is a prerelease, where the choice is between a working
+      # prerelease and a broken one.
+      - name: Point latest at the newest working prerelease
+        if: ${{ inputs.dry_run == false && inputs.verify_only == false && inputs.target == 'cli' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./packages/cli/package.json').version")"
+          stable="$(npm view @notifie-dev/cli versions --json \
+            --registry https://registry.npmjs.org/ \
+            | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{
+                const all = JSON.parse(d);
+                const list = Array.isArray(all) ? all : [all];
+                console.log(list.filter((v) => !v.includes("-")).length);
+              })')"
+
+          if [ "$stable" != "0" ]; then
+            echo "A stable release exists; leaving the latest tag untouched."
+            exit 0
+          fi
+
+          echo "Pointing latest at $version"
+          npm dist-tag add "@notifie-dev/cli@$version" latest \
+            --registry https://registry.npmjs.org/
+
       - name: Verify published CLI
         if: ${{ inputs.dry_run == false && inputs.target == 'cli' }}
         env:

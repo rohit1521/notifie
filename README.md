@@ -29,13 +29,13 @@ implementation("dev.notifie:notifie-android:0.1.0-beta.6")
 **Flutter**
 
 ```bash
-flutter pub add notifie_flutter:^0.1.0-beta.9
+flutter pub add notifie_flutter:^0.1.0-beta.10
 ```
 
 **CLI** — `latest` still resolves to a withdrawn build, so pin the version:
 
 ```bash
-npm install -g @notifie-dev/cli@0.1.0-beta.2
+npm install -g @notifie-dev/cli@0.1.0-beta.3
 ```
 
 Then read the [quickstart](docs-public/quickstart.mdx).
@@ -46,15 +46,14 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 | --- | --- | --- | --- | --- |
 | [Swift](sdks/swift) | iOS 15+ SDK: events, APNs tokens, notification callbacks | CocoaPods | `Notifie` | `0.1.0-beta.5` |
 | [Android](sdks/android) | Android SDK: events, FCM tokens, notification handling | Maven Central | `dev.notifie:notifie-android` | `0.1.0-beta.6` |
-| [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.9` |
-| [CLI](packages/cli) | Project configuration and integration diagnostics | npm | `@notifie-dev/cli` | `0.1.0-beta.2` |
+| [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.10` |
+| [CLI](packages/cli) | Project configuration and integration diagnostics | npm | `@notifie-dev/cli` | `0.1.0-beta.3` |
 | [Contracts](packages/contracts) | Event, identity, push token and notification wire types | npm | `@notifie-dev/contracts` | `0.1.0-beta.1` |
 
 ## Known issues in published versions
 
 These are fixed in this repository but not yet on the registry.
 
-- **CLI `0.1.0-beta.2`** — until `0.1.0-beta.3` is published, notifie init and doctor still ask native iOS apps to forward AppDelegate and notification center callbacks manually. Notifie 0.1.0-beta.5 intercepts and forwards those callbacks automatically, so the old CLI adds unnecessary integration work.
 - **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing. Nothing documented references them, so this affects only a consumer importing the types directly. The release is ready and waiting on an npm credential.
 
 ## Source available, not yet published

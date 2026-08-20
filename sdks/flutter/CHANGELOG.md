@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0-beta.10
+
+### Fixed
+
+- The iOS bridge now pins `Notifie` 0.1.0-beta.5. The previous release pinned
+  0.1.0-beta.4 exactly, so once the native pod moved to 0.1.0-beta.5 an app that
+  also depended on the native SDK directly could not resolve CocoaPods at all.
+  Flutter behaviour is unchanged: this plugin registers APNs tokens itself
+  rather than through the native enrolment call.
+
 ## 0.1.0-beta.9
 
 ### Fixed
