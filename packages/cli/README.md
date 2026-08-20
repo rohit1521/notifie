@@ -24,5 +24,5 @@ notifie test-push
 - `install` explains what a template does before you apply it.
 - `test-push` sends the setup event used by the dashboard test flow.
 
-The CLI never needs APNs or FCM credentials for local notifications. Provider
-credentials belong to the optional Notifie Cloud remote-push path.
+The CLI never handles APNs or FCM credentials itself. Those are uploaded in the
+dashboard, encrypted at rest, and never written to disk by these commands.
