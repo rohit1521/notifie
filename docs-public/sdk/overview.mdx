@@ -9,21 +9,17 @@ description: "Choose the Notifie SDK that matches your application stack."
 | Android | Yes | FCM | Yes | Maven Central |
 | Flutter | Yes | APNs / FCM | Yes | pub.dev |
 | React Native | Yes | FCM | Not yet on main | Source only — not published |
-| Server | Yes | No | Yes | Source only — not published |
 | Web | Yes | No | Not yet | Source only — not published |
 
 <Note>
   Published today: `Notifie 0.1.0-beta.4` on CocoaPods,
   `dev.notifie:notifie-android:0.1.0-beta.6` on Maven Central, and
-  `notifie_flutter 0.1.0-beta.8` on pub.dev.
+  `notifie_flutter 0.1.0-beta.9` on pub.dev.
 
-  React Native, Server and Web are **not on any registry**. Installing them by
+  React Native and Web are **not on any registry**. Installing them by
   name will fail; build them from a checkout of the public repository until
   their registry releases are available.
 </Note>
 
-All SDKs must use the hosted base URL in production:
-
-```text
-https://notifie.dev
-```
+Released SDKs use the hosted Notifie API by default. Production initialization does not need a
+base-URL parameter.

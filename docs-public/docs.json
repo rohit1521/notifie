@@ -33,7 +33,6 @@
           "sdk/android",
           "sdk/flutter",
           "sdk/react-native",
-          "sdk/server",
           "sdk/web"
         ]
       },

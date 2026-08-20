@@ -8,7 +8,7 @@ description: "Track events and register Firebase messaging tokens from Flutter."
 
 ```yaml
 dependencies:
-  notifie_flutter: 0.1.0-beta.8
+  notifie_flutter: 0.1.0-beta.9
 ```
 
 The package requires iOS 15+ or Android API 23+.
@@ -20,7 +20,6 @@ import 'package:notifie_flutter/notifie_flutter.dart';
 
 await Notifie.initialize(
   apiKey: '<SDK_INGEST_KEY>',
-  baseUrl: 'https://notifie.dev',
 );
 
 await Notifie.track(

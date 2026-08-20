@@ -14,8 +14,14 @@ current SDK require UIKit and are available only on iOS.
 
 ## Install
 
-Swift Package Manager, through Xcode's **Add Local Package** flow on
-`sdks/swift`. A tagged remote package release is not available yet.
+Swift Package Manager:
+
+```swift
+.package(
+    url: "https://github.com/rohit1521/notifie",
+    exact: "0.1.0-beta.4"
+)
+```
 
 CocoaPods is published, which is also what lets the Flutter plugin depend on
 this SDK:
@@ -30,8 +36,7 @@ pod 'Notifie', '0.1.0-beta.4'
 import Notifie
 
 Notifie.initialize(
-    apiKey: "<SDK_INGEST_KEY>",
-    baseURL: URL(string: "https://notifie.dev")!
+    apiKey: "<SDK_INGEST_KEY>"
 )
 
 Notifie.identify("user-123", properties: [
