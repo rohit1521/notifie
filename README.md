@@ -29,7 +29,7 @@ implementation("dev.notifie:notifie-android:0.1.0-beta.6")
 **Flutter**
 
 ```bash
-flutter pub add notifie_flutter:^0.1.0-beta.8
+flutter pub add notifie_flutter:^0.1.0-beta.9
 ```
 
 **CLI** — `latest` still resolves to a withdrawn build, so pin the version:
@@ -46,7 +46,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 | --- | --- | --- | --- | --- |
 | [Swift](sdks/swift) | iOS 15+ SDK: events, APNs tokens, notification callbacks | CocoaPods | `Notifie` | `0.1.0-beta.4` |
 | [Android](sdks/android) | Android SDK: events, FCM tokens, notification handling | Maven Central | `dev.notifie:notifie-android` | `0.1.0-beta.6` |
-| [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.8` |
+| [Flutter](sdks/flutter) | Flutter SDK bridging the native implementations | pub.dev | `notifie_flutter` | `0.1.0-beta.9` |
 | [CLI](packages/cli) | Project configuration and integration diagnostics | npm | `@notifie-dev/cli` | `0.1.0-beta.2` |
 | [Contracts](packages/contracts) | Event, identity, push token and notification wire types | npm | `@notifie-dev/contracts` | `0.1.0-beta.1` |
 
@@ -54,7 +54,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 
 These are fixed in this repository but not yet on the registry.
 
-- **Flutter `0.1.0-beta.8`** — until `0.1.0-beta.9` is published, every build prints a Flutter warning that this plugin applies the Kotlin Gradle Plugin, and a future Flutter version will refuse to build an app that uses it; and initializing without Firebase reports the same missing-Firebase condition through `onError` twice, which reads like two separate problems. Neither affects remote push, which is the supported surface. The release is held back until the Kotlin change is built against an older Flutter, because removing the plugin application incorrectly would break compilation for every consumer.
+- **Flutter `0.1.0-beta.9`** — until `0.1.0-beta.9` is published, every build prints a Flutter warning that this plugin applies the Kotlin Gradle Plugin, and a future Flutter version will refuse to build an app that uses it; and initializing without Firebase reports the same missing-Firebase condition through `onError` twice, which reads like two separate problems. Neither affects remote push, which is the supported surface. The release is held back until the Kotlin change is built against an older Flutter, because removing the plugin application incorrectly would break compilation for every consumer.
 - **CLI `0.1.0-beta.2`** — until `0.1.0-beta.3` is published, notifie init does not mention the two AppDelegate callbacks required for APNs enrollment, and notifie doctor cannot detect their absence. A correctly provisioned physical iPhone therefore waits ten seconds and returns .noToken with no actionable diagnosis.
 - **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing. Nothing documented references them, so this affects only a consumer importing the types directly. The release is ready and waiting on an npm credential.
 

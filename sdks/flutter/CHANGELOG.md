@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0-beta.9
+
+### Fixed
+
+- Android notification taps now deliver the complete FCM payload to the
+  destination activity through `dev.notifie:notifie-android` 0.1.0-beta.6.
+  The native SDK previously attributed the open but started the app with no
+  extras, so custom data could not reach application code.
+- Android's Gradle integration no longer applies the Kotlin Gradle Plugin,
+  avoiding Flutter's built-in-Kotlin compatibility warning.
+- Initializing without Firebase reports the missing setup through `onError`
+  once rather than twice.
+- The iOS bridge now pins `Notifie` 0.1.0-beta.4, which exposes documented APNs
+  registration facades and prevents `enableNotifications()` from timing out
+  when its AppDelegate callbacks are forwarded.
+
 ## 0.1.0-beta.8
 
 ### Fixed
