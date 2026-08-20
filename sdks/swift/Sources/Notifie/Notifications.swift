@@ -10,9 +10,8 @@ import UserNotifications
  Notification enrolment.
 
  Notifie owns the permission request, APNs registration request, token
- persistence, and server registration. Apple still delivers the registration
- result only through `UIApplicationDelegate`, so the host forwards those two
- callbacks to the small facade below.
+ persistence, server registration, and the delegate interception needed to
+ observe Apple's callbacks without replacing host-app behavior.
  */
 public extension Notifie {
 
@@ -49,24 +48,20 @@ public extension Notifie {
     }
 
     /**
-     Forwards Apple's successful APNs registration callback.
+     Compatibility hook for bridges that already own APNs registration.
 
-     Call from
-     `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`.
-     The facade deliberately hides `PushTokenBridge`, which is an implementation
-     detail rather than a host-app API.
+     Native applications do not call this; `enableNotifications()` intercepts
+     Apple's callback automatically.
      */
     static func didRegisterForRemoteNotifications(deviceToken: Data) {
         PushTokenBridge.shared.didRegister(deviceToken: deviceToken)
     }
 
     /**
-     Forwards Apple's failed APNs registration callback.
+     Compatibility hook for bridges that already own APNs registration.
 
-     Call from
-     `application(_:didFailToRegisterForRemoteNotificationsWithError:)`.
-     This resumes an outstanding `enableNotifications()` call immediately
-     instead of making it wait for the ten-second no-token timeout.
+     Native applications do not call this; `enableNotifications()` intercepts
+     Apple's failure callback automatically.
      */
     static func didFailToRegisterForRemoteNotifications(error: Error) {
         PushTokenBridge.shared.didFail(error: error)
@@ -84,6 +79,10 @@ extension Notifie {
         }
 
 #if canImport(UserNotifications) && canImport(UIKit)
+        await MainActor.run {
+            AutomaticPushDelegates.install()
+        }
+
         let granted: Bool
         do {
             granted = try await UNUserNotificationCenter.current().requestAuthorization(options: options)
@@ -133,16 +132,13 @@ extension Notifie {
 
 /**
  Bridges the APNs delegate callback into async/await.
-
- `registerForRemoteNotifications()` reports its result through an
- `AppDelegate` method, which the SDK cannot implement on the host app's behalf.
- The app forwards it here and enrolment completes.
  */
 public final class PushTokenBridge: @unchecked Sendable {
     public static let shared = PushTokenBridge()
 
     private let lock = NSLock()
     private var waiters: [(Data?) -> Void] = []
+    private var lastToken: Data?
     private var timeoutTask: Task<Void, Never>?
 
     /// APNs normally answers in well under a second; a hung wait would leave
@@ -152,8 +148,25 @@ public final class PushTokenBridge: @unchecked Sendable {
 
     private init() {}
 
+    func resetForTesting() {
+        lock.withLock {
+            lastToken = nil
+            waiters = []
+        }
+        timeoutTask?.cancel()
+        timeoutTask = nil
+    }
+
     func awaitToken(_ completion: @escaping (Data?) -> Void) {
-        lock.withLock { waiters.append(completion) }
+        let existing: Data? = lock.withLock {
+            if let lastToken { return lastToken }
+            waiters.append(completion)
+            return nil
+        }
+        if let existing {
+            completion(existing)
+            return
+        }
 
         timeoutTask?.cancel()
         timeoutTask = Task { [weak self] in
@@ -163,12 +176,13 @@ public final class PushTokenBridge: @unchecked Sendable {
         }
     }
 
-    /// Call from `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`.
+    /// Used by automatic delegate interception and cross-platform bridges.
     public func didRegister(deviceToken: Data) {
+        lock.withLock { lastToken = deviceToken }
         deliver(deviceToken)
     }
 
-    /// Call from `application(_:didFailToRegisterForRemoteNotificationsWithError:)`.
+    /// Used by automatic delegate interception and cross-platform bridges.
     public func didFail(error: Error) {
         deliver(nil)
     }

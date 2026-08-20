@@ -139,20 +139,12 @@ event left behind by an earlier run.
 
 ## The integration code you have to write
 
-Two APNs callbacks, forwarded in
-[NotifieDemoApp.swift](NotifieDemo/NotifieDemoApp.swift):
+One call, at the moment the user understands why notifications are useful:
 
 ```swift
-func application(_ app: UIApplication,
-                 didRegisterForRemoteNotificationsWithDeviceToken token: Data) {
-    PushTokenBridge.shared.didRegister(deviceToken: token)
-}
-
-func application(_ app: UIApplication,
-                 didFailToRegisterForRemoteNotificationsWithError error: Error) {
-    PushTokenBridge.shared.didFail(error: error)
-}
+let result = await Notifie.enableNotifications()
 ```
 
-That is the whole integration. Token upload, refresh, batching, retries,
-offline queueing and session events are the SDK's problem, not yours.
+That is the whole integration. APNs callbacks, receipt/open attribution, token
+upload, refresh, batching, retries, offline queueing and session events are the
+SDK's problem, not yours.

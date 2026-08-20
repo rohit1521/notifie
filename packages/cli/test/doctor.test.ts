@@ -4,8 +4,6 @@ import {
   checkAuthenticates,
   checkAutomations,
   checkEventsArriving,
-  checkIosApnsCallbacks,
-  checkIosNotificationDelegate,
   checkPushConfigured,
   checkReachable,
   formatResults,
@@ -36,57 +34,6 @@ describe('checkApiKey', () => {
     const result = checkApiKey({});
     expect(result.status).toBe('fail');
     expect(result.fix).toContain('notifie init');
-  });
-
-  describe('checkIosApnsCallbacks', () => {
-    it('fails when the callbacks that complete enrollment are missing', () => {
-      const result = checkIosApnsCallbacks('final class AppDelegate {}');
-      expect(result.status).toBe('fail');
-      expect(result.fix).toContain('.noToken');
-    });
-
-    describe('checkIosNotificationDelegate', () => {
-      it('fails when opens cannot be attributed', () => {
-        const result = checkIosNotificationDelegate('final class AppDelegate {}');
-        expect(result.status).toBe('fail');
-        expect(result.fix).toContain('opens are not attributed');
-      });
-
-      it('passes when receipt and open callbacks are forwarded', () => {
-        const result = checkIosNotificationDelegate(`
-    final class AppDelegate: UNUserNotificationCenterDelegate {
-      func launch() { UNUserNotificationCenter.current().delegate = self }
-      func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification
-      ) async -> UNNotificationPresentationOptions {
-        Notifie.notificationReceived(userInfo: notification.request.content.userInfo)
-        return [.banner]
-      }
-      func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse
-      ) async {
-        Notifie.notificationOpened(response: response)
-      }
-    }`);
-        expect(result.status).toBe('pass');
-      });
-    });
-
-    it('passes only when both success and failure callbacks are forwarded', () => {
-      const result = checkIosApnsCallbacks(`
-  func application(
-    _ application: UIApplication,
-    didRegisterForRemoteNotificationsWithDeviceToken token: Data
-  ) { Notifie.didRegisterForRemoteNotifications(deviceToken: token) }
-  func application(
-    _ application: UIApplication,
-    didFailToRegisterForRemoteNotificationsWithError error: Error
-  ) { Notifie.didFailToRegisterForRemoteNotifications(error: error) }
-  `);
-      expect(result.status).toBe('pass');
-    });
   });
 
   it('fails on a malformed key', () => {

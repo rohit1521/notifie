@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 #if canImport(UserNotifications)
 import UserNotifications
 #endif
@@ -16,14 +17,14 @@ import UserNotifications
  */
 public extension Notifie {
 
-    /// Call when a notification is delivered while the app is in the foreground,
-    /// from `userNotificationCenter(_:willPresent:)`.
+    /// Compatibility hook for bridges that already own notification callbacks.
+    /// Native apps are recorded automatically after `enableNotifications()`.
     static func notificationReceived(userInfo: [AnyHashable: Any]) {
         shared.recordNotificationEvent("notification_received", userInfo: userInfo)
     }
 
-    /// Call when the user taps a notification, from
-    /// `userNotificationCenter(_:didReceive:)`.
+    /// Compatibility hook for bridges that already own notification callbacks.
+    /// Native apps are recorded automatically after `enableNotifications()`.
     ///
     /// Reports both `notification_opened` and `notification_clicked`: a tap on
     /// the body opens the app, while a tap on an action button is a click on
@@ -130,6 +131,34 @@ extension Notifie {
             properties["invocation_id"] = .string(invocationId)
         }
 
-        performTrack(eventName: name, properties: properties)
+        let messageId = (userInfo["gk_invocation_id"] as? String).map {
+            deterministicNotificationEventId(invocationId: $0, event: name, extra: extra)
+        }
+        performTrack(eventName: name, properties: properties, messageId: messageId)
     }
+}
+
+func deterministicNotificationEventId(
+    invocationId: String,
+    event: String,
+    extra: Properties
+) -> String {
+    let action: String
+    if case .string(let value) = extra["action"] {
+        action = value
+    } else {
+        action = ""
+    }
+    let digest = SHA256.hash(data: Data("\(invocationId):\(event):\(action)".utf8))
+    var bytes = Array(digest.prefix(16))
+    bytes[6] = (bytes[6] & 0x0f) | 0x50
+    bytes[8] = (bytes[8] & 0x3f) | 0x80
+    return String(
+        format: "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+        bytes[0], bytes[1], bytes[2], bytes[3],
+        bytes[4], bytes[5],
+        bytes[6], bytes[7],
+        bytes[8], bytes[9],
+        bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
+    )
 }

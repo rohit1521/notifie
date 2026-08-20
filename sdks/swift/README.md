@@ -9,8 +9,9 @@ Push notifications for indie developers. Four methods. That's it.
 
 ## Installation
 
-Clone the Notifie repository and add `sdks/swift` through Xcode's **Add Local
-Package** flow. A tagged public package release is not available yet.
+Use Swift Package Manager with
+`https://github.com/rohit1521/notifie` at exact version `0.1.0-beta.5`, or add
+`pod 'Notifie', '0.1.0-beta.5'` with CocoaPods.
 
 ## Local notifications, without an account
 
@@ -152,33 +153,14 @@ Notifie.track("purchase_completed", properties: ["amount": .double(9.99)])
 
 ## Wiring up push
 
-Forward two AppDelegate callbacks. That is the entire native integration:
+No AppDelegate or notification-center delegate forwarding is required:
 
 ```swift
-func application(_ app: UIApplication,
-                 didRegisterForRemoteNotificationsWithDeviceToken token: Data) {
-    PushTokenBridge.shared.didRegister(deviceToken: token)
-}
-
-func application(_ app: UIApplication,
-                 didFailToRegisterForRemoteNotificationsWithError error: Error) {
-    PushTokenBridge.shared.didFail(error: error)
-}
+let result = await Notifie.enableNotifications()
 ```
 
-Then report engagement from your notification delegate:
-
-```swift
-func userNotificationCenter(_ center: UNUserNotificationCenter,
-                            didReceive response: UNNotificationResponse) async {
-    Notifie.notificationOpened(response: response)
-
-    // Notifie never navigates for you — routing is your decision.
-    if let url = Notifie.deepLink(from: response.notification.request.content.userInfo) {
-        router.open(url)
-    }
-}
-```
+Notifie observes APNs registration, foreground receipt, and notification opens.
+If the app already owns either delegate, its callbacks still run unchanged.
 
 For rich images, add a Notification Service Extension and use the SDK helper:
 
@@ -244,4 +226,3 @@ running API, used by the repository's end-to-end check:
 xcrun swift build
 ./.build/debug/notifie-example "gk_live_…" "http://localhost:3000"
 ```
-

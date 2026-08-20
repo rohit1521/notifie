@@ -365,7 +365,11 @@ public final class Notifie: @unchecked Sendable {
         }
     }
 
-    func performTrack(eventName: String, properties: Properties) {
+    func performTrack(
+        eventName: String,
+        properties: Properties,
+        messageId: String? = nil
+    ) {
         let state: (
             queue: EventQueue,
             userId: String?,
@@ -390,7 +394,7 @@ public final class Notifie: @unchecked Sendable {
         let event = NotifieEvent(
             // Generated once here and reused across retries; this is what makes
             // server-side idempotency work.
-            messageId: UUID().uuidString.lowercased(),
+            messageId: messageId ?? UUID().uuidString.lowercased(),
             event: eventName,
             timestamp: Date(),
             userId: state.userId,

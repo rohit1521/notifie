@@ -6,8 +6,6 @@ import {
   plistAddBackgroundMode,
   entitlementsHasApsEnvironment,
   entitlementsAddApsEnvironment,
-  appDelegateForwardsApnsCallbacks,
-  appDelegateHandlesNotificationEvents,
   manifestHasNotificationPermission,
   manifestAddNotificationPermission,
   expoHasBackgroundMode,
@@ -402,52 +400,12 @@ describe('planChanges — swift project', () => {
     }
   });
 
-  it('requires both APNs delegate callbacks when AppDelegate is incomplete', () => {
+  it('does not require AppDelegate forwarding for Swift push', () => {
     const appDelegate = join(tmpDir, 'AppDelegate.swift');
     writeFileSync(appDelegate, 'final class AppDelegate {}', 'utf8');
 
     const changes = planChanges({ type: 'swift', paths: { appDelegate } });
-    const bridge = changes.find((change) => change.file === appDelegate);
-
-    expect(bridge?.description).toContain('APNs registration callbacks');
-    expect(bridge?.manualInstructions).toContain('didRegisterForRemoteNotifications');
-    expect(bridge?.manualInstructions).toContain('didFailToRegisterForRemoteNotifications');
-  });
-
-  it('does not request APNs callback work once both callbacks are present', () => {
-    const appDelegate = join(tmpDir, 'AppDelegate.swift');
-    writeFileSync(
-      appDelegate,
-      `func application(
-  _ application: UIApplication,
-  didRegisterForRemoteNotificationsWithDeviceToken token: Data
-) { Notifie.didRegisterForRemoteNotifications(deviceToken: token) }
-func application(
-  _ application: UIApplication,
-  didFailToRegisterForRemoteNotificationsWithError error: Error
-) { Notifie.didFailToRegisterForRemoteNotifications(error: error) }`,
-      'utf8',
-    );
-
-    const changes = planChanges({ type: 'swift', paths: { appDelegate } });
-    expect(
-      changes.some((change) => change.description.includes('APNs registration callbacks')),
-    ).toBe(false);
-    expect(appDelegateForwardsApnsCallbacks(readFileSync(appDelegate, 'utf8'))).toBe(true);
-  });
-
-  it('requires the notification delegate that records receipts and opens', () => {
-    const appDelegate = join(tmpDir, 'AppDelegate.swift');
-    writeFileSync(appDelegate, 'final class AppDelegate {}', 'utf8');
-
-    const changes = planChanges({ type: 'swift', paths: { appDelegate } });
-    const delegate = changes.find((change) =>
-      change.description.includes('notification receipt and open'),
-    );
-
-    expect(delegate?.manualInstructions).toContain('UNUserNotificationCenterDelegate');
-    expect(delegate?.manualInstructions).toContain('Notifie.notificationOpened');
-    expect(appDelegateHandlesNotificationEvents(readFileSync(appDelegate, 'utf8'))).toBe(false);
+    expect(changes.some((change) => change.file === appDelegate)).toBe(false);
   });
 
   it('does NOT write any file for a swift project', () => {

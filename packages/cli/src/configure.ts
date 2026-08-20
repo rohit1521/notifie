@@ -93,72 +93,6 @@ export function entitlementsAddApsEnvironment(content: string): string {
   return content.slice(0, lastClose) + insert + content.slice(lastClose);
 }
 
-export function appDelegateForwardsApnsCallbacks(content: string): boolean {
-  const success =
-    content.includes('didRegisterForRemoteNotificationsWithDeviceToken') &&
-    (
-      content.includes('Notifie.didRegisterForRemoteNotifications') ||
-      content.includes('PushTokenBridge.shared.didRegister')
-    );
-  const failure =
-    content.includes('didFailToRegisterForRemoteNotificationsWithError') &&
-    (
-      content.includes('Notifie.didFailToRegisterForRemoteNotifications') ||
-      content.includes('PushTokenBridge.shared.didFail')
-    );
-  return success && failure;
-}
-
-export function appDelegateHandlesNotificationEvents(content: string): boolean {
-  return (
-    content.includes('UNUserNotificationCenterDelegate') &&
-    content.includes('UNUserNotificationCenter.current().delegate') &&
-    content.includes('willPresent notification: UNNotification') &&
-    content.includes('Notifie.notificationReceived') &&
-    content.includes('didReceive response: UNNotificationResponse') &&
-    content.includes('Notifie.notificationOpened')
-  );
-}
-
-const APNS_CALLBACK_INSTRUCTIONS = `Add both methods to AppDelegate:
-
-func application(
-    _ application: UIApplication,
-    didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
-) {
-    Notifie.didRegisterForRemoteNotifications(deviceToken: deviceToken)
-}
-
-func application(
-    _ application: UIApplication,
-    didFailToRegisterForRemoteNotificationsWithError error: Error
-) {
-    Notifie.didFailToRegisterForRemoteNotifications(error: error)
-}
-
-Without both callbacks, enableNotifications() waits ten seconds and returns .noToken.`;
-
-const NOTIFICATION_DELEGATE_INSTRUCTIONS = `Make AppDelegate conform to
-UNUserNotificationCenterDelegate, set
-UNUserNotificationCenter.current().delegate = self during launch, and forward:
-
-func userNotificationCenter(
-    _ center: UNUserNotificationCenter,
-    willPresent notification: UNNotification
-) async -> UNNotificationPresentationOptions {
-    Notifie.notificationReceived(userInfo: notification.request.content.userInfo)
-    return [.banner, .sound]
-}
-
-func userNotificationCenter(
-    _ center: UNUserNotificationCenter,
-    didReceive response: UNNotificationResponse
-) async {
-    Notifie.notificationOpened(response: response)
-}
-
-Without this delegate, foreground receipt and notification-open attribution are not recorded.`;
-
 /** True if the manifest already contains POST_NOTIFICATIONS. */
 export function manifestHasNotificationPermission(content: string): boolean {
   const manifest = parseXmlRoot(content, 'manifest');
@@ -761,26 +695,6 @@ export function planChanges(info: ProjectInfo): ProjectChange[] {
           'Xcode creates the entitlements file with aps-environment automatically.',
       });
       changes.push(makeXcodeCapabilityChange());
-      if (
-        !info.paths.appDelegate ||
-        !appDelegateForwardsApnsCallbacks(readFileSync(info.paths.appDelegate, 'utf8'))
-      ) {
-        changes.push({
-          file: info.paths.appDelegate ?? 'AppDelegate.swift',
-          description: 'Forward APNs registration callbacks to Notifie',
-          manualInstructions: APNS_CALLBACK_INSTRUCTIONS,
-        });
-      }
-      if (
-        !info.paths.appDelegate ||
-        !appDelegateHandlesNotificationEvents(readFileSync(info.paths.appDelegate, 'utf8'))
-      ) {
-        changes.push({
-          file: info.paths.appDelegate ?? 'AppDelegate.swift',
-          description: 'Forward notification receipt and open events to Notifie',
-          manualInstructions: NOTIFICATION_DELEGATE_INSTRUCTIONS,
-        });
-      }
       break;
 
     case 'web':

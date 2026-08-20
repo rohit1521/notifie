@@ -19,8 +19,6 @@ import {
   checkMissingHostFile,
   checkIosBackgroundMode,
   checkIosEntitlement,
-  checkIosApnsCallbacks,
-  checkIosNotificationDelegate,
   checkAndroidPermission,
   checkGoogleServicesJson,
   checkGoogleServicesGradle,
@@ -375,29 +373,6 @@ async function cmdDoctor(): Promise<number> {
       });
     }
 
-    if (info.type === 'swift') {
-      if (!info.paths.appDelegate) {
-        results.push({
-          name: 'APNs callback bridge',
-          status: 'fail',
-          message: 'AppDelegate could not be found.',
-          fix: 'Add AppDelegate.swift and run `notifie init` for the APNs callback methods.',
-        });
-      } else {
-        try {
-          const appDelegate = readFileSync(info.paths.appDelegate, 'utf8');
-          results.push(checkIosApnsCallbacks(appDelegate));
-          results.push(checkIosNotificationDelegate(appDelegate));
-        } catch {
-          results.push({
-            name: 'APNs callback bridge',
-            status: 'fail',
-            message: 'AppDelegate could not be read.',
-            fix: 'Fix its permissions, then rerun `notifie doctor`.',
-          });
-        }
-      }
-    }
   }
 
   if (info.paths.androidManifest) {

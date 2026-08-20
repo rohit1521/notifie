@@ -3,8 +3,6 @@ import type { ProjectType } from './detect.ts';
 import {
   plistHasBackgroundMode,
   entitlementsHasApsEnvironment,
-  appDelegateForwardsApnsCallbacks,
-  appDelegateHandlesNotificationEvents,
   gradleHasGoogleServicesPlugin,
   hasUnresolvedAndroidApplicationId,
   isStructurallyValidAndroidManifest,
@@ -68,43 +66,6 @@ export function checkApiKey(config: DoctorConfig): CheckResult {
     name: 'API key',
     status: 'pass',
     message: `${parsed.environment} key ending …${parsed.secret.slice(-4)}`,
-  };
-}
-
-export function checkIosApnsCallbacks(content: string): CheckResult {
-  if (!appDelegateForwardsApnsCallbacks(content)) {
-    return {
-      name: 'APNs callback bridge',
-      status: 'fail',
-      message: 'AppDelegate does not forward both APNs registration callbacks to Notifie.',
-      fix:
-        'Run `notifie init` for the exact AppDelegate methods. Without them, ' +
-        'enableNotifications() waits ten seconds and returns .noToken.',
-    };
-  }
-
-  return {
-    name: 'APNs callback bridge',
-    status: 'pass',
-    message: 'Both APNs registration callbacks are forwarded.',
-  };
-}
-
-export function checkIosNotificationDelegate(content: string): CheckResult {
-  if (!appDelegateHandlesNotificationEvents(content)) {
-    return {
-      name: 'iOS notification delegate',
-      status: 'fail',
-      message: 'AppDelegate does not forward notification receipt and open events to Notifie.',
-      fix:
-        'Run `notifie init` for the UNUserNotificationCenterDelegate methods. ' +
-        'Without them, foreground receipts and opens are not attributed.',
-    };
-  }
-  return {
-    name: 'iOS notification delegate',
-    status: 'pass',
-    message: 'Notification receipt and open events are forwarded.',
   };
 }
 
