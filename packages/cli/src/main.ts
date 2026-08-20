@@ -19,6 +19,8 @@ import {
   checkMissingHostFile,
   checkIosBackgroundMode,
   checkIosEntitlement,
+  checkIosApnsCallbacks,
+  checkIosNotificationDelegate,
   checkAndroidPermission,
   checkGoogleServicesJson,
   checkGoogleServicesGradle,
@@ -274,7 +276,9 @@ async function cmdInit(args: string[]): Promise<number> {
     case 'swift':
       print('    import Notifie');
       print(`    Notifie.initialize(apiKey: "${apiKey.slice(0, 16)}…")`);
-      print('    await Notifie.enableNotifications()\n');
+      print('    await Notifie.enableNotifications()');
+      print('    Forward both APNs registration callbacks in AppDelegate;');
+      print('    `notifie init` prints the exact methods.\n');
       break;
     case 'web':
       print(`    Notifie.initialize({ apiKey: '${apiKey.slice(0, 16)}…' });`);
@@ -369,6 +373,30 @@ async function cmdDoctor(): Promise<number> {
         message: 'The entitlements file could not be read.',
         fix: 'Fix the file permissions or restore the file, then rerun `notifie doctor`.',
       });
+    }
+
+    if (info.type === 'swift') {
+      if (!info.paths.appDelegate) {
+        results.push({
+          name: 'APNs callback bridge',
+          status: 'fail',
+          message: 'AppDelegate could not be found.',
+          fix: 'Add AppDelegate.swift and run `notifie init` for the APNs callback methods.',
+        });
+      } else {
+        try {
+          const appDelegate = readFileSync(info.paths.appDelegate, 'utf8');
+          results.push(checkIosApnsCallbacks(appDelegate));
+          results.push(checkIosNotificationDelegate(appDelegate));
+        } catch {
+          results.push({
+            name: 'APNs callback bridge',
+            status: 'fail',
+            message: 'AppDelegate could not be read.',
+            fix: 'Fix its permissions, then rerun `notifie doctor`.',
+          });
+        }
+      }
     }
   }
 

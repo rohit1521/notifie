@@ -28,6 +28,30 @@ private func pushMakeConfig() -> NotifieConfiguration {
 
 final class PushTokenTests: XCTestCase {
 
+    func testPublicRegistrationFacadeDeliversTokenToTheEnrolmentWaiter() async {
+        let expected = Data([0x01, 0x02, 0x03])
+
+        let token = await withCheckedContinuation {
+            (continuation: CheckedContinuation<Data?, Never>) in
+            PushTokenBridge.shared.awaitToken { continuation.resume(returning: $0) }
+            Notifie.didRegisterForRemoteNotifications(deviceToken: expected)
+        }
+
+        XCTAssertEqual(token, expected)
+    }
+
+    func testPublicFailureFacadeFinishesTheEnrolmentWaiterWithoutATimeout() async {
+        struct RegistrationError: Error {}
+
+        let token = await withCheckedContinuation {
+            (continuation: CheckedContinuation<Data?, Never>) in
+            PushTokenBridge.shared.awaitToken { continuation.resume(returning: $0) }
+            Notifie.didFailToRegisterForRemoteNotifications(error: RegistrationError())
+        }
+
+        XCTAssertNil(token)
+    }
+
     // MARK: - Hex conversion
 
     func testHexConversionLeadingZeroBytes() {

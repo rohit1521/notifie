@@ -9,10 +9,10 @@ import UserNotifications
 /**
  Notification enrolment.
 
- The whole point of Notifie is that a developer never touches
- `UNUserNotificationCenter`, `registerForRemoteNotifications`, or the
- `didRegisterForRemoteNotificationsWithDeviceToken` delegate dance. One call
- does all of it and reports the outcome.
+ Notifie owns the permission request, APNs registration request, token
+ persistence, and server registration. Apple still delivers the registration
+ result only through `UIApplicationDelegate`, so the host forwards those two
+ callbacks to the small facade below.
  */
 public extension Notifie {
 
@@ -46,6 +46,30 @@ public extension Notifie {
         options: UNAuthorizationOptions = [.alert, .badge, .sound]
     ) async -> NotificationEnrolment {
         await shared.performEnableNotifications(options: options)
+    }
+
+    /**
+     Forwards Apple's successful APNs registration callback.
+
+     Call from
+     `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`.
+     The facade deliberately hides `PushTokenBridge`, which is an implementation
+     detail rather than a host-app API.
+     */
+    static func didRegisterForRemoteNotifications(deviceToken: Data) {
+        PushTokenBridge.shared.didRegister(deviceToken: deviceToken)
+    }
+
+    /**
+     Forwards Apple's failed APNs registration callback.
+
+     Call from
+     `application(_:didFailToRegisterForRemoteNotificationsWithError:)`.
+     This resumes an outstanding `enableNotifications()` call immediately
+     instead of making it wait for the ten-second no-token timeout.
+     */
+    static func didFailToRegisterForRemoteNotifications(error: Error) {
+        PushTokenBridge.shared.didFail(error: error)
     }
 }
 

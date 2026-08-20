@@ -51,14 +51,51 @@ Request permission when it makes sense in your product:
 let result = await Notifie.enableNotifications()
 ```
 
-Forward the APNs registration callback:
+Apple returns APNs registration through `UIApplicationDelegate`. Forward both
+callbacks so `enableNotifications()` can finish immediately:
 
 ```swift
 func application(
     _ application: UIApplication,
     didRegisterForRemoteNotificationsWithDeviceToken token: Data
 ) {
-    PushTokenBridge.shared.didRegister(deviceToken: token)
+    Notifie.didRegisterForRemoteNotifications(deviceToken: token)
+}
+
+func application(
+    _ application: UIApplication,
+    didFailToRegisterForRemoteNotificationsWithError error: Error
+) {
+    Notifie.didFailToRegisterForRemoteNotifications(error: error)
+}
+```
+
+Without these callbacks, `enableNotifications()` waits ten seconds and returns
+`.noToken` even when permission and the Push Notifications capability are
+correct.
+
+To record foreground receipt and notification-open attribution, make
+`AppDelegate` conform to `UNUserNotificationCenterDelegate`, set the delegate
+during launch, and forward both events:
+
+```swift
+UNUserNotificationCenter.current().delegate = self
+
+func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification
+) async -> UNNotificationPresentationOptions {
+    Notifie.notificationReceived(
+        userInfo: notification.request.content.userInfo
+    )
+    return [.banner, .sound]
+}
+
+func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse
+) async {
+    Notifie.notificationOpened(response: response)
 }
 ```
 

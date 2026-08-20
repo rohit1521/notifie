@@ -97,8 +97,10 @@ describe('detectProject', () => {
 
   it('detects swift from a *.xcodeproj directory', () => {
     mkdirSync(join(tmpDir, 'MyApp.xcodeproj'), { recursive: true });
+    write('MyApp/AppDelegate.swift', 'final class AppDelegate {}');
     const result = detectProject(tmpDir);
     expect(result.type).toBe('swift');
+    expect(result.paths.appDelegate).toContain('AppDelegate.swift');
   });
 
   it('detects swift from Package.swift', () => {

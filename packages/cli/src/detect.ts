@@ -22,6 +22,8 @@ export interface ProjectPaths {
   appJson?: string;
   /** package.json, if found. */
   packageJson?: string;
+  /** Native iOS application delegate, if found. */
+  appDelegate?: string;
 }
 
 export interface ProjectInfo {
@@ -116,6 +118,27 @@ function findAndroidManifest(cwd: string): string | undefined {
 
 function findFirst(candidates: string[]): string | undefined {
   return candidates.find((candidate) => existsSync(candidate));
+}
+
+function findAppDelegate(dir: string, depth = 0): string | undefined {
+  if (depth > 4) return undefined;
+  try {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isFile() && ['AppDelegate.swift', 'AppDelegate.m', 'AppDelegate.mm'].includes(entry.name)) {
+        return join(dir, entry.name);
+      }
+      if (
+        entry.isDirectory() &&
+        !['.build', '.git', 'build', 'DerivedData', 'Pods'].includes(entry.name)
+      ) {
+        const found = findAppDelegate(join(dir, entry.name), depth + 1);
+        if (found) return found;
+      }
+    }
+  } catch {
+    // unreadable directory
+  }
+  return undefined;
 }
 
 function findAndroidPaths(cwd: string): Pick<
@@ -233,7 +256,7 @@ export function detectProject(cwd = process.cwd()): ProjectInfo {
     return {
       type: 'swift',
       // Info.plist location is not predictable from outside the Xcode project.
-      paths: {},
+      paths: { appDelegate: findAppDelegate(cwd) },
     };
   }
 
