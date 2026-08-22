@@ -423,20 +423,64 @@ public object Notifie {
     }
 
     private fun fetchAndRegisterToken(client: NotifieClient) {
-        val callback = notificationCallback
-        // FirebaseMessaging.getInstance() throws synchronously when the app has
-        // no google-services.json, so addOnFailureListener cannot see it. Left
+        // The host app's own Firebase wins whenever it has one. It is already
+        // configured, costs no network call, and quietly replacing it with a
+        // different project would be a surprising thing for an SDK to do.
+        //
+        // getInstance() throws synchronously when there is no
+        // google-services.json, so addOnFailureListener cannot see it. Left
         // uncaught it crashes the host app, including from the permission
-        // result callback, instead of reporting a diagnosable enrollment state.
-        val messaging = try {
+        // result callback, instead of reporting a diagnosable enrolment state.
+        val local = try {
             FirebaseMessaging.getInstance()
         } catch (error: IllegalStateException) {
-            Log.e(logTag, "Remote push needs Firebase. Add google-services.json to this app.", error)
-            callback?.invoke(NotificationEnrollment.TOKEN_ERROR)
-            clearNotificationCallback(callback)
+            null
+        }
+
+        if (local != null) {
+            registerWithMessaging(client, local)
             return
         }
-        messaging.token
+
+        val context = application
+        val apiKey = initializedApiKey
+        val baseUrl = initializedBaseUrl
+        if (context == null || apiKey == null || baseUrl == null) {
+            reportTokenError()
+            return
+        }
+
+        // No google-services.json, so ask the server for the same four values
+        // the file would have supplied. This is a blocking request and one
+        // caller is the permission result callback, which runs on the main
+        // thread, so it cannot happen here.
+        Thread({
+            val config = NotifiePushConfig.fetch(baseUrl, apiKey)
+            val messaging = config?.let { NotifiePushConfig.messagingFor(context, it) }
+            if (messaging == null) {
+                Log.e(
+                    logTag,
+                    "Remote push needs Firebase. Either add google-services.json to this app, " +
+                        "or upload the Firebase service account in Notifie so the SDK can " +
+                        "configure Firebase itself.",
+                )
+                reportTokenError()
+            } else {
+                registerWithMessaging(client, messaging)
+            }
+        }, "notifie-push-config").start()
+    }
+
+    private fun reportTokenError() {
+        val callback = notificationCallback
+        callback?.invoke(NotificationEnrollment.TOKEN_ERROR)
+        clearNotificationCallback(callback)
+    }
+
+    private fun registerWithMessaging(client: NotifieClient, messaging: FirebaseMessaging) {
+        val callback = notificationCallback
+        val resolved = messaging
+        resolved.token
             .addOnSuccessListener { token ->
                 if (token.isBlank()) {
                     callback?.invoke(NotificationEnrollment.TOKEN_ERROR)
@@ -817,5 +861,5 @@ public object Notifie {
     private const val maxPendingNotificationEvents = 100
     private const val maxPendingNotificationOpens = maxPendingNotificationEvents
     private const val maxProcessedNotificationInvocations = 256
-    private const val logTag = "Notifie"
+    internal const val logTag = "Notifie"
 }
