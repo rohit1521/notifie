@@ -20,11 +20,10 @@ import java.net.URL
  * class of failure where push works locally and silently does not in release
  * builds because the file was never committed.
  *
- * None of these values is a secret. They ship inside every APK that uses
- * `google-services.json` today, and Firebase protects the API key by binding it
- * to the app's signing certificate rather than by keeping it hidden. The
- * service account, which is what can actually send a notification, stays on the
- * server.
+ * These values are not confidential — they are compiled into every APK that
+ * uses `google-services.json` today — but that is not the same as harmless, so
+ * the request carries the API key and the server requires it. The service
+ * account, which is what can actually send a notification, stays on the server.
  */
 internal data class NotifieFirebaseConfig(
     val projectId: String,
