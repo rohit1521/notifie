@@ -54,6 +54,7 @@ Then read the [quickstart](docs-public/quickstart.mdx).
 
 These are fixed in this repository but not yet on the registry.
 
+- **Android `0.1.0-beta.6`** — until `0.1.0-beta.7` is published, an Android app still needs google-services.json and the Google Services Gradle plugin, even when Notifie already holds the project configuration and could supply it at runtime. Nothing regresses by installing 0.1.0-beta.6 - it behaves exactly as every release so far - but the setup step this removes is not available yet. Waiting on a Maven Central signing credential, and on a device run confirming that a token minted from a secondary FirebaseApp receives messages.
 - **CLI `0.1.0-beta.2`** — until `0.1.0-beta.3` is published, notifie init still asks native iOS apps to forward the AppDelegate and notification centre callbacks by hand, and notifie doctor still fails a project that omits them. Notifie 0.1.0-beta.5 does that forwarding itself, so the published CLI now asks for work that is not needed and reports a correct project as broken. The release is built and verified; it is waiting on the NPM_TOKEN secret, which the publish workflow no longer has.
 - **Contracts `0.1.0-beta.1`** — until `0.1.0-beta.2` is published, the local notification contracts are missing. Nothing documented references them, so this affects only a consumer importing the types directly. The release is ready and waiting on an npm credential.
 
